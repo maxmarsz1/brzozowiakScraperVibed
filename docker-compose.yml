@@ -1,0 +1,54 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: brzozowiak_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - sqlite_data:/data
+      - .:/app          # live-reload: mounts source code
+    environment:
+      - DJANGO_DEBUG=True
+      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 backend
+      - DB_PATH=/data/db.sqlite3
+    command: python manage.py runserver 0.0.0.0:8000
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: brzozowiak_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app           # live-reload: mounts source code
+      - /app/node_modules         # keep container's node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: brzozowiak_scraper
+    restart: unless-stopped
+    volumes:
+      - sqlite_data:/data
+      - .:/app
+    environment:
+      - DJANGO_DEBUG=True
+      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 backend
+      - DB_PATH=/data/db.sqlite3
+    entrypoint: []
+    command: python manage.py run_scraper
+    depends_on:
+      - backend
+
+volumes:
+  sqlite_data:
