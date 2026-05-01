@@ -24,9 +24,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-@6sy-=2@g)=9^#@fb4%g$yqg*n$xte4a+&0^-*ait#3v(fmw1b')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split()
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['*']
+
+CSRF_TRUSTED_ORIGINS = [f"http://{host}" for host in ALLOWED_HOSTS if host != '*']
+if os.environ.get('CSRF_TRUSTED_ORIGINS'):
+    CSRF_TRUSTED_ORIGINS += os.environ.get('CSRF_TRUSTED_ORIGINS').split()
 
 
 # Application definition
@@ -61,7 +67,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'frontend/dist'] if (BASE_DIR / 'frontend/dist').exists() else [],
+        'DIRS': [BASE_DIR / 'frontend/dist'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -127,10 +133,13 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-if (BASE_DIR / 'frontend/dist').exists():
-    STATICFILES_DIRS = [
-        BASE_DIR / 'frontend/dist/static' if (BASE_DIR / 'frontend/dist/static').exists() else BASE_DIR / 'frontend/dist',
-    ]
+STATICFILES_DIRS = []
+frontend_dist = BASE_DIR / 'frontend/dist'
+if frontend_dist.exists():
+    if (frontend_dist / 'static').exists():
+        STATICFILES_DIRS.append(frontend_dist / 'static')
+    else:
+        STATICFILES_DIRS.append(frontend_dist)
 
 # Use WhiteNoise for static files
 STORAGES = {

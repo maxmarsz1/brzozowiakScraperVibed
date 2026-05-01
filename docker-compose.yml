@@ -9,7 +9,6 @@ services:
       - "${BACKEND_PORT:-8000}:8000"
     volumes:
       - sqlite_data:/data
-      - .:/app
     environment:
       - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost 127.0.0.1 backend}
@@ -60,7 +59,6 @@ services:
     restart: unless-stopped
     volumes:
       - sqlite_data:/data
-      - .:/app
     environment:
       - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost 127.0.0.1 backend}
