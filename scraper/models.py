@@ -20,6 +20,7 @@ class Offer(models.Model):
     mileage = models.CharField(max_length=100, null=True, blank=True)
     equipment = models.TextField(null=True, blank=True)
     img = models.URLField(max_length=2000, null=True, blank=True)
+    images = models.JSONField(default=list, blank=True)
     
     # New fields discovered
     number_of_doors = models.CharField(max_length=50, null=True, blank=True)
@@ -34,7 +35,8 @@ class Offer(models.Model):
     
     # Flag to track if the offer has been seen in the frontend
     is_seen = models.BooleanField(default=False, null=True)
-    is_favorite = models.BooleanField(default=False)
+    is_favorite = models.BooleanField(default=False, null=True)
+    is_archived = models.BooleanField(default=False, null=True)
 
     def __str__(self):
         return f"{self.title} - {self.offer_id}"
@@ -46,3 +48,13 @@ class SavedSearch(models.Model):
 
     def __str__(self):
         return self.name
+
+class ScraperStatus(models.Model):
+    last_run = models.DateTimeField(null=True, blank=True)
+    next_run = models.DateTimeField(null=True, blank=True)
+    last_maintenance_run = models.DateTimeField(null=True, blank=True)
+    is_running = models.BooleanField(default=False)
+    force_scrape = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Scraper Status: {self.next_run}"

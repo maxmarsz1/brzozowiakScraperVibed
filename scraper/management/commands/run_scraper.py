@@ -3,61 +3,14 @@ import random
 import requests
 from bs4 import BeautifulSoup
 from django.core.management.base import BaseCommand
-from scraper.models import Offer
+from scraper.models import Offer, ScraperStatus
+from django.utils import timezone
+from datetime import timedelta
 
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
 }
 
-def get_auctions(url, pages_count):
-    pages = []
-    failed = []
-
-    for page in range(pages_count):
-        try:
-            print(f"Getting {page+1} page...")
-            r = requests.get(url + str(page+1), headers=HEADERS)
-            bs = BeautifulSoup(r.text, features="html.parser")
-            auctions = bs.find("div", class_="list")
-
-            if len(pages) and pages[-1] == auctions:
-                print("Went through all pages. Breaking...")
-                break
-            
-            if auctions:
-                pages.append(auctions)
-
-        except Exception as e:
-            print(e)
-            failed.append(page)
-            time.sleep(1)
-
-    if failed:
-        print("Retrying on failed pages.")
-        for page in failed:
-            try:
-                print(f"Retrying on {page+1} page...")
-                r = requests.get(url + str(page+1), headers=HEADERS)
-                bs = BeautifulSoup(r.text, features="html.parser")
-                auctions = bs.find("div", class_="list")
-                if auctions:
-                    pages.append(auctions)
-            except Exception as e:
-                print(f"Failed again on page {page+1}: {e}")
-
-    return pages
-
-def get_auction_urls(auctions):
-    urls = []
-    for page in auctions:
-        if page is None:
-            continue
-        offers = page.find_all("div", class_="listRow")
-        for offer in offers:
-            a_tag = offer.find("a")
-            if a_tag and 'href' in a_tag.attrs:
-                urls.append(a_tag['href'])
-    return urls
 
 def get_data_from_url(url):
     try:
@@ -92,14 +45,14 @@ def get_data_from_url(url):
         details["fuel"] = get_text_or_null(offer_data.find("td", itemprop="fuelType"))
         details["body"] = get_text_or_null(offer_data.find("td", itemprop="bodyType"))
         details["color"] = get_text_or_null(offer_data.find("td", itemprop="color"))
-        
+
         # New itemprop
         details["number_of_doors"] = get_text_or_null(offer_data.find("td", itemprop="numberOfDoors"))
 
         # Table headers (TH)
         details["capacity"] = get_th_value("Pojemność silnika")
         details["km"] = get_th_value("Moc silnika")
-        
+
         # New TH fields
         details["imported_status"] = get_th_value("Status pojazdu sprowadzonego")
         details["usage"] = get_th_value("Użytkowanie")
@@ -115,19 +68,28 @@ def get_data_from_url(url):
 
         mileage_span = offer_data.find("span", string=lambda t: t and "Przebieg:" in t)
         if not mileage_span:
-             mileage_span = offer_data.find(lambda tag: tag.name == "span" and "Przebieg:" in tag.text)
+            mileage_span = offer_data.find(lambda tag: tag.name == "span" and "Przebieg:" in tag.text)
         if mileage_span and mileage_span.parent and mileage_span.parent.b:
             details["mileage"] = mileage_span.parent.b.text.replace(" KM", "").replace(" ", "").strip()
         else:
             details["mileage"] = None
 
         details["equipment"] = get_text_or_null(offer_data.find("p", itemprop="description"))
-        
+
         details["id"] = url[-12:-5]
         details["url"] = url
-        
+
         img_a = offer_data.find("a", class_="ath")
-        details["img"] = img_a['href'] if img_a and 'href' in img_a.attrs else None
+
+        # Extract all images from the LGA div container
+        lga_div = offer_data.find("div", id="LGA", class_="athCnt")
+        if lga_div:
+            img_links = [a['href'] for a in lga_div.find_all("a", class_="ath") if 'href' in a.attrs]
+            details["images"] = img_links
+        else:
+            details["images"] = [img_a['href']] if img_a and 'href' in img_a.attrs else []
+
+        details["img"] = details["images"][0] if details["images"] else None
 
         return details
     except Exception as e:
@@ -140,57 +102,141 @@ def run_scraper():
     url = "https://brzozowiak.pl/samochody-osobowe/?str="
     pages_count = 200
 
-    try:
-        # Get existing URLs from DB
-        db_urls = set(Offer.objects.values_list('url', flat=True))
+    # Get existing URLs from DB
+    db_urls = set(Offer.objects.values_list('url', flat=True))
 
-        auctions = get_auctions(url, pages_count)
-        urls = [base_url + u if not u.startswith("http") else u for u in get_auction_urls(auctions)]
+    new_urls = []
+    consecutive_existing = 0
+    stop_scraping = False
 
-        new_urls = [u for u in urls if u not in db_urls]
+    for page in range(pages_count):
+        if stop_scraping:
+            break
 
-        if new_urls:
-            print(f"Adding {len(new_urls)} new offers to database.")
-            for index, u in enumerate(new_urls):
-                print(f"{round((index+1)/(len(new_urls))*100)}% - Offer: {index+1}/{len(new_urls)}")
-                details = get_data_from_url(u)
-                if details:
-                    # Update or create offer
-                    Offer.objects.update_or_create(
-                        offer_id=details["id"],
-                        defaults={
-                            'url': details["url"],
-                            'title': details.get("title"),
-                            'description': details.get("description"),
-                            'date': details.get("date"),
-                            'location': details.get("location"),
-                            'brand': details.get("brand"),
-                            'model': details.get("model"),
-                            'capacity': details.get("capacity"),
-                            'year': details.get("year"),
-                            'transmission': details.get("transmission"),
-                            'fuel': details.get("fuel"),
-                            'body': details.get("body"),
-                            'color': details.get("color"),
-                            'price': details.get("price"),
-                            'km': details.get("km"),
-                            'mileage': details.get("mileage"),
-                            'equipment': details.get("equipment"),
-                            'img': details.get("img"),
-                            'number_of_doors': details.get("number_of_doors"),
-                            'imported_status': details.get("imported_status"),
-                            'usage': details.get("usage"),
-                            'registration_country': details.get("registration_country"),
-                            'mot_valid_until': details.get("mot_valid_until"),
-                            'insurance_paid_until': details.get("insurance_paid_until"),
-                        }
-                    )
-            print("Finished successfully!")
-        else:
-            print("Database up to date.")
-    except Exception as e:
-        print(f"Error during scraping: {e}")
+        try:
+            print(f"Getting {page+1} page...")
+            r = requests.get(url + str(page+1), headers=HEADERS)
+            bs = BeautifulSoup(r.text, features="html.parser")
+            auctions_list = bs.find("div", class_="list")
 
+            if not auctions_list:
+                print("No more auctions found. Breaking...")
+                break
+
+            offers = auctions_list.find_all("div", class_="listRow")
+            if not offers:
+                break
+
+            for offer in offers:
+                a_tag = offer.find("a")
+                if a_tag and 'href' in a_tag.attrs:
+                    offer_url = a_tag['href']
+                    full_url = base_url + offer_url if not offer_url.startswith("http") else offer_url
+
+                    if full_url in db_urls:
+                        consecutive_existing += 1
+                        if consecutive_existing >= 3 and len(db_urls) > 4000:
+                            print("Found 3 consecutive existing offers. Stopping pagination.")
+                            stop_scraping = True
+                            break
+                    else:
+                        consecutive_existing = 0
+                        if full_url not in new_urls:
+                            new_urls.append(full_url)
+
+        except Exception as e:
+            print(f"Failed getting page {page+1}: {e}")
+            time.sleep(1)
+
+    if new_urls:
+        print(f"Adding {len(new_urls)} new offers to database.")
+        for index, u in enumerate(new_urls):
+            print(f"{round((index+1)/(len(new_urls))*100)}% - Offer: {index+1}/{len(new_urls)}")
+            details = get_data_from_url(u)
+            if details:
+                for attempt in range(5):
+                    try:
+                        Offer.objects.update_or_create(
+                            offer_id=details["id"],
+                            defaults={
+                                'url': details["url"],
+                                'title': details.get("title"),
+                                'description': details.get("description"),
+                                'date': details.get("date"),
+                                'location': details.get("location"),
+                                'brand': details.get("brand"),
+                                'model': details.get("model"),
+                                'capacity': details.get("capacity"),
+                                'year': details.get("year"),
+                                'transmission': details.get("transmission"),
+                                'fuel': details.get("fuel"),
+                                'body': details.get("body"),
+                                'color': details.get("color"),
+                                'price': details.get("price"),
+                                'km': details.get("km"),
+                                'mileage': details.get("mileage"),
+                                'equipment': details.get("equipment"),
+                                'img': details.get("img"),
+                                'number_of_doors': details.get("number_of_doors"),
+                                'imported_status': details.get("imported_status"),
+                                'usage': details.get("usage"),
+                                'registration_country': details.get("registration_country"),
+                                'mot_valid_until': details.get("mot_valid_until"),
+                                'insurance_paid_until': details.get("insurance_paid_until"),
+                                'images': details.get("images", []),
+                                'is_archived': False,
+                            }
+                        )
+                        break
+                    except Exception as e:
+                        if "locked" in str(e).lower() and attempt < 4:
+                            print(f"Database locked, retrying {attempt+1}/5...")
+                            time.sleep(3)
+                        else:
+                            print(f"Failed to save offer {details.get('id', u)}: {e}")
+                            break
+        print("Finished successfully!")
+    else:
+        print("Database up to date.")
+
+
+def run_maintenance():
+    print("Running maintenance: checking for inactive offers...")
+    # Get all non-archived offers
+    active_offers = Offer.objects.filter(is_archived=False)
+    total = active_offers.count()
+    archived_count = 0
+    
+    print(f"Starting check for {total} active offers...")
+    
+    for i, offer in enumerate(active_offers):
+        if (i + 1) % 50 == 0:
+            print(f"Progress: {i + 1}/{total} offers checked...")
+            
+        try:
+            # Check if URL is still valid
+            response = requests.get(offer.url, headers=HEADERS, timeout=10)
+            
+            # Brzozowiak often returns 200 but with "Nie znaleziono" text for deleted offers
+            # Or it might return 404
+            is_gone = False
+            if response.status_code == 404:
+                is_gone = True
+            elif "ogłoszenie nie istnieje" in response.text.lower() or "nie znaleziono ogłoszenia" in response.text.lower():
+                is_gone = True
+                
+            if is_gone:
+                offer.is_archived = True
+                offer.save()
+                archived_count += 1
+                print(f"Archived inactive offer: {offer.offer_id}")
+        except Exception as e:
+            print(f"Error checking {offer.offer_id}: {e}")
+            
+        # polite delay
+        time.sleep(0.3)
+        
+    print(f"Maintenance complete. Total archived: {archived_count}")
 
 class Command(BaseCommand):
     help = 'Runs the scraper every 1h +- rand 1-30min'
@@ -198,15 +244,54 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         print("Scraper started...")
         while True:
+            now = timezone.now()
+            status, _ = ScraperStatus.objects.get_or_create(id=1)
+            
+            # NIGHT MAINTENANCE CHECK (between 2 AM and 4 AM)
+            # Run once per day in this window
+            is_night_window = 2 <= now.hour <= 4
+            already_run_today = status.last_maintenance_run and status.last_maintenance_run.date() == now.date()
+            
+            if is_night_window and not already_run_today:
+                print(f"Maintenance window reached ({now.hour}:00). Starting maintenance...")
+                status.is_running = True
+                status.save()
+                try:
+                    run_maintenance()
+                except Exception as e:
+                    print(f"Maintenance error: {e}")
+                status.last_maintenance_run = timezone.now()
+                status.is_running = False
+                status.save()
+                print("Maintenance session finished.")
+
             print("Starting a new scraping cycle...")
+            status.is_running = True
+            status.force_scrape = False  # Reset flag when starting
+            status.last_run = timezone.now()
+            status.save()
+            
             run_scraper()
             
-            # Wait 1 hour (3600 seconds) +/- 1-30 minutes (60 - 1800 seconds)
+            # Calculate wait time
             base_wait = 3600
             rand_direction = random.choice([-1, 1])
             rand_wait = random.randint(60, 1800)
             wait_time = base_wait + (rand_direction * rand_wait)
             
-            next_run = wait_time / 60
-            print(f"Sleeping for {round(next_run, 2)} minutes until next run...")
-            time.sleep(wait_time)
+            status.is_running = False
+            status.next_run = timezone.now() + timedelta(seconds=wait_time)
+            status.save()
+            
+            next_run_mins = wait_time / 60
+            print(f"Sleeping for {round(next_run_mins, 2)} minutes until next run...")
+            
+            # Custom sleep loop to allow forcing a scrape
+            end_sleep = timezone.now() + timedelta(seconds=wait_time)
+            while timezone.now() < end_sleep:
+                # Check for forced scrape
+                status.refresh_from_db()
+                if status.force_scrape:
+                    print("Force scrape detected! Breaking sleep...")
+                    break
+                time.sleep(5)

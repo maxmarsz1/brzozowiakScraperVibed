@@ -45,6 +45,7 @@ services:
       - DJANGO_DEBUG=True
       - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 backend
       - DB_PATH=/data/db.sqlite3
+      - PYTHONUNBUFFERED=1
     entrypoint: []
     command: python manage.py run_scraper
     depends_on:

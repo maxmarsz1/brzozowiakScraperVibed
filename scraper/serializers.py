@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Offer, SavedSearch
+from .models import Offer, SavedSearch, ScraperStatus
 from django.http import QueryDict
 from django.db.models import FloatField, IntegerField
 from django.db.models.functions import Cast
@@ -27,7 +27,7 @@ class SavedSearchSerializer(serializers.ModelSerializer):
             year_num=Cast('year', IntegerField()),
             price_num=Cast('price', FloatField()),
             mileage_num=Cast('mileage', IntegerField())
-        ).filter(is_seen=False)
+        ).filter(is_seen=False, is_archived=False)
         
         f = OfferFilter(qdict, queryset=base_qs)
         qs = f.qs
@@ -42,3 +42,8 @@ class SavedSearchSerializer(serializers.ModelSerializer):
             )
             
         return qs.count()
+
+class ScraperStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScraperStatus
+        fields = '__all__'

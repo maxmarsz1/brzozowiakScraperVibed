@@ -4,10 +4,11 @@ from rest_framework.response import Response
 from django_filters import rest_framework as filters
 from rest_framework.filters import OrderingFilter, SearchFilter
 from django.shortcuts import render
-from django.db.models import FloatField, IntegerField
-from django.db.models.functions import Cast
-from .models import Offer, SavedSearch
-from .serializers import OfferSerializer, SavedSearchSerializer
+from django.db.models import FloatField, IntegerField, CharField
+from django.db.models.functions import Cast, Replace
+from django.db.models import Value
+from .models import Offer, SavedSearch, ScraperStatus
+from .serializers import OfferSerializer, SavedSearchSerializer, ScraperStatusSerializer
 
 class OfferFilter(filters.FilterSet):
     year_min = filters.NumberFilter(field_name='year_num', lookup_expr='gte')
@@ -19,11 +20,20 @@ class OfferFilter(filters.FilterSet):
     is_seen = filters.BooleanFilter(field_name='is_seen')
     is_favorite = filters.BooleanFilter(field_name='is_favorite')
     has_price = filters.BooleanFilter(method='filter_has_price')
+    published_after = filters.CharFilter(method='filter_published_after')
+    published_before = filters.CharFilter(method='filter_published_before')
 
     def filter_has_price(self, queryset, name, value):
         if value:
             return queryset.exclude(price__isnull=True).exclude(price='').exclude(price='NULL')
         return queryset
+
+    def filter_published_after(self, queryset, name, value):
+        # date field is stored as YYYY.MM.DD — string comparison is lexicographically sortable
+        return queryset.exclude(date__isnull=True).exclude(date='').filter(date__gte=value)
+
+    def filter_published_before(self, queryset, name, value):
+        return queryset.exclude(date__isnull=True).exclude(date='').filter(date__lte=value)
 
     class Meta:
         model = Offer
@@ -38,14 +48,14 @@ class OfferViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ['title', 'description', 'equipment', 'location']
     
     # Fields that can be used for sorting
-    ordering_fields = ['price_num', 'year_num', 'mileage_num', 'capacity', 'created_at', 'updated_at']
+    ordering_fields = ['price_num', 'year_num', 'mileage_num', 'capacity', 'created_at', 'updated_at', 'date']
     
     # Default ordering
     ordering = ['-created_at']
 
     def get_queryset(self):
         # We cast the char fields to numbers so sorting and range filtering work correctly
-        return Offer.objects.annotate(
+        return Offer.objects.filter(is_archived=False).annotate(
             year_num=Cast('year', IntegerField()),
             price_num=Cast('price', FloatField()),
             mileage_num=Cast('mileage', IntegerField())
@@ -69,6 +79,19 @@ class OfferViewSet(viewsets.ReadOnlyModelViewSet):
 class SavedSearchViewSet(viewsets.ModelViewSet):
     queryset = SavedSearch.objects.all().order_by('-created_at')
     serializer_class = SavedSearchSerializer
+
+class ScraperStatusViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ScraperStatus.objects.all()
+    serializer_class = ScraperStatusSerializer
+
+    @action(detail=True, methods=['post'])
+    def trigger(self, request, pk=None):
+        status = self.get_object()
+        if status.is_running:
+            return Response({'status': 'error', 'message': 'Already running'}, status=400)
+        status.force_scrape = True
+        status.save()
+        return Response({'status': 'Scrape triggered'})
 
 def index(request):
     return render(request, 'scraper/index.html')
