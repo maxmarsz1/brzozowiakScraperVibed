@@ -4,7 +4,10 @@ import OfferDetails from './OfferDetails';
 import { translations } from './translations';
 import './index.css';
 
-const API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:8000`;
+// Use hardcoded backend URL only in development, otherwise use relative paths
+const API_BASE_URL = window.location.port === '5173' 
+    ? `${window.location.protocol}//${window.location.hostname}:8000`
+    : '';
 
 const formatPrice = (price) => {
     if (!price) return null;

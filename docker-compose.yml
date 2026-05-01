@@ -6,31 +6,51 @@ services:
     container_name: brzozowiak_backend
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     volumes:
       - sqlite_data:/data
-      - .:/app          # live-reload: mounts source code
+      - .:/app
     environment:
-      - DJANGO_DEBUG=True
-      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 backend
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost 127.0.0.1 backend}
       - DB_PATH=/data/db.sqlite3
-    command: python manage.py runserver 0.0.0.0:8000
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-your-secret-key}
+    command: ${BACKEND_COMMAND:-gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3}
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: production-vite
     container_name: brzozowiak_frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+    depends_on:
+      - backend
+    profiles:
+      - vite
+
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: brzozowiak_frontend_dev
     restart: unless-stopped
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend:/app           # live-reload: mounts source code
-      - /app/node_modules         # keep container's node_modules
+      - ./frontend:/app
+      - /app/node_modules
     environment:
       - VITE_API_URL=http://localhost:8000
     depends_on:
       - backend
+    profiles:
+      - dev
 
   scraper:
     build:
@@ -42,8 +62,8 @@ services:
       - sqlite_data:/data
       - .:/app
     environment:
-      - DJANGO_DEBUG=True
-      - DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 backend
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-False}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost 127.0.0.1 backend}
       - DB_PATH=/data/db.sqlite3
       - PYTHONUNBUFFERED=1
     entrypoint: []

@@ -53,11 +53,21 @@ docker compose up -d
 
 ### 4. Open the app
 
-| Service  | URL                        |
-|----------|----------------------------|
-| Frontend | http://localhost:5173       |
-| Backend API | http://localhost:8000/api/ |
-| Django Admin | http://localhost:8000/admin/ |
+The URL depends on your configuration in the `.env` file (see [Configuration](#configuration) below).
+
+| Mode | Service | URL |
+|------|---------|-----|
+| **Development** (default) | Frontend (Vite Dev) | http://localhost:5173 |
+| **Production (Django)** | Fullstack | http://localhost:8000 |
+| **Production (Vite)** | Frontend (Nginx) | http://localhost:3000 |
+
+### 5. Updating the project
+
+Use the provided script to pull latest changes and rebuild:
+
+```bash
+./update_project.sh
+```
 
 ### Stop everything
 
@@ -179,12 +189,38 @@ brzozowiakApp/
 
 ---
 
-## Environment Variables
+## Configuration
+
+The project uses a `.env` file for configuration. Copy the settings and modify as needed.
+
+### Production Modes
+
+You can choose how the frontend is served in production by setting `FRONTEND_MODE` in `.env`:
+
+| Mode | Value | Description |
+|------|-------|-------------|
+| **Django** | `django` | Django serves the built frontend files via WhiteNoise. Best for simple deployments. |
+| **Vite** | `vite` | A separate Nginx container serves the frontend and proxies API calls to the backend. |
+
+### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DJANGO_SECRET_KEY` | insecure default | Django secret key |
-| `DJANGO_DEBUG` | `True` | Enable debug mode |
-| `DJANGO_ALLOWED_HOSTS` | `localhost 127.0.0.1 backend` | Space-separated allowed hosts |
-| `DB_PATH` | `./db.sqlite3` | Path to SQLite database file |
-| `VITE_API_URL` | `http://localhost:8000` | Backend API base URL |
+| `FRONTEND_MODE` | `django` | `django` or `vite` (Production only) |
+| `DJANGO_DEBUG` | `False` | Enable debug mode (set to `True` for development) |
+| `DJANGO_SECRET_KEY` | (required) | Django secret key for production |
+| `DJANGO_ALLOWED_HOSTS` | `localhost 127.0.0.1` | Allowed hosts for Django |
+| `BACKEND_PORT` | `8000` | Port for the Django backend |
+| `FRONTEND_PORT` | `3000` | Port for the Nginx frontend (Vite mode only) |
+| `VITE_API_URL` | `http://localhost:8000` | API URL for the frontend |
+
+---
+
+## Development Mode
+
+To run in development mode with hot-reloading:
+
+1. Set `DJANGO_DEBUG=True` in `.env`.
+2. Run `docker compose --profile dev up`.
+3. Frontend will be on `http://localhost:5173`.
+4. Backend will be on `http://localhost:8000`.

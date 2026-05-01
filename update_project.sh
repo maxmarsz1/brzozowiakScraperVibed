@@ -3,10 +3,15 @@
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 LOG_FILE="$SCRIPT_DIR/update_log.txt"
-BRANCH="main" # Change this if you use a different branch name
+BRANCH="main"
 
 # Navigate to project directory
 cd "$SCRIPT_DIR" || exit
+
+# Load environment variables
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+fi
 
 # Fetch latest changes from remote
 git fetch origin "$BRANCH"
@@ -15,15 +20,22 @@ git fetch origin "$BRANCH"
 LOCAL=$(git rev-parse HEAD)
 REMOTE=$(git rev-parse "origin/$BRANCH")
 
-if [ "$LOCAL" != "$REMOTE" ]; then
-    echo "$(date): New updates detected. Pulling and rebuilding..." >> "$LOG_FILE"
+if [ "$LOCAL" != "$REMOTE" ] || [ "$1" == "--force" ]; then
+    echo "$(date): Updates detected or force rebuild. Pulling and rebuilding..." >> "$LOG_FILE"
     
     # Pull the changes
     git pull origin "$BRANCH"
     
-    # Rebuild and restart docker containers
-    # --build ensures any code changes in Dockerfiles or requirements are picked up
-    docker compose up -d --build >> "$LOG_FILE" 2>&1
+    # Determine which profiles to run
+    if [ "$FRONTEND_MODE" == "vite" ]; then
+        echo "Running in VITE mode (Frontend served by Nginx)"
+        COMPOSE_PROFILES=vite docker compose up -d --build >> "$LOG_FILE" 2>&1
+    else
+        echo "Running in DJANGO mode (Frontend served by Django)"
+        docker compose up -d --build >> "$LOG_FILE" 2>&1
+        # In django mode, we might want to ensure the frontend is built
+        # docker compose run --rm frontend-build
+    fi
     
     echo "$(date): Update complete." >> "$LOG_FILE"
 else

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import OfferViewSet, SavedSearchViewSet, ScraperStatusViewSet, index
+from .views import OfferViewSet, SavedSearchViewSet, ScraperStatusViewSet
 
 router = DefaultRouter()
 router.register(r'offers', OfferViewSet, basename='offer')
@@ -9,5 +9,4 @@ router.register(r'scraper_status', ScraperStatusViewSet, basename='scraper_statu
 
 urlpatterns = [
     path('api/', include(router.urls)),
-    path('', index, name='index'),
 ]
