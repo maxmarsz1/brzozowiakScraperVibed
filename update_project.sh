@@ -31,12 +31,10 @@ if [ "$LOCAL" != "$REMOTE" ] || [ "$1" == "--force" ]; then
     # Determine which profiles to run
     if [ "$FRONTEND_MODE" == "vite" ]; then
         echo "Running in VITE mode (Frontend served by Nginx)"
-        COMPOSE_PROFILES=vite docker compose up -d --build >> "$LOG_FILE" 2>&1
+        COMPOSE_PROFILES=vite docker compose up -d --build -V >> "$LOG_FILE" 2>&1
     else
         echo "Running in DJANGO mode (Frontend served by Django)"
-        docker compose up -d --build >> "$LOG_FILE" 2>&1
-        # In django mode, we might want to ensure the frontend is built
-        # docker compose run --rm frontend-build
+        docker compose up -d --build -V >> "$LOG_FILE" 2>&1
     fi
     
     echo "$(date): Update complete." >> "$LOG_FILE"
