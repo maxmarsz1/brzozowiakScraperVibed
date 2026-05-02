@@ -80,7 +80,9 @@ export const translations = {
         pageSize: "Page Size",
         infiniteScroll: "Infinite Scroll",
         loadingMore: "Loading more...",
-        savedSearchesRefreshed: "Saved searches refreshed!"
+        savedSearchesRefreshed: "Saved searches refreshed!",
+        alternatives: "Alternatives",
+        newResults: "New Results!"
     },
     pl: {
         title: "Brzozowiak Intelligence",
@@ -166,6 +168,8 @@ export const translations = {
         pageSize: "Rozmiar strony",
         infiniteScroll: "Nieskończone przewijanie",
         loadingMore: "Ładowanie więcej...",
-        savedSearchesRefreshed: "Zapisane wyszukiwania odświeżone!"
+        savedSearchesRefreshed: "Zapisane wyszukiwania odświeżone!",
+        alternatives: "Alternatywne",
+        newResults: "Nowe wyniki!"
     }
 };

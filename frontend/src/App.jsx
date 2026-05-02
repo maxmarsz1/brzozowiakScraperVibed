@@ -292,6 +292,7 @@ function App() {
 
     const [selectedOffer, setSelectedOffer] = useState(null);
     const [showSaveModal, setShowSaveModal] = useState(false);
+    const [showSavedDrawer, setShowSavedDrawer] = useState(false);
     const [toasts, setToasts] = useState([]);
     
     const showToast = (message, type = 'success') => {
@@ -635,7 +636,16 @@ function App() {
     return (
         <>
             {selectedOffer && (
-                <OfferDetails offer={selectedOffer} onBack={handleBack} t={t} />
+                <OfferDetails 
+                    offer={selectedOffer} 
+                    onBack={handleBack} 
+                    t={t} 
+                    savedSearches={savedSearches}
+                    onOpenSaved={() => {
+                        handleBack();
+                        setShowSavedDrawer(true);
+                    }}
+                />
             )}
             <div className="min-h-screen p-6 custom-scrollbar">
                 <header className="mb-8 flex justify-between items-end border-b border-slate-700 pb-4">
@@ -684,13 +694,28 @@ function App() {
                         </p>
                     </div>
                     <div className="text-slate-300 text-sm flex items-center gap-4">
+                        <button 
+                            onClick={() => setShowSavedDrawer(true)}
+                            className="relative flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition-all group"
+                        >
+                            <Bookmark className={`w-4 h-4 transition-colors ${savedSearches.some(ss => ss.new_count > 0) ? 'text-emerald-400' : 'text-slate-400 group-hover:text-emerald-400'}`} />
+                            <span className="text-xs font-bold uppercase tracking-wider">{t('savedSearches')}</span>
+                            {savedSearches.reduce((acc, ss) => acc + (ss.new_count || 0), 0) > 0 && (
+                                <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-500 text-[8px] font-bold text-white flex items-center justify-center">
+                                        {savedSearches.reduce((acc, ss) => acc + (ss.new_count || 0), 0)}
+                                    </span>
+                                </span>
+                            )}
+                        </button>
                     </div>
                 </header>
 
                 <div className="flex flex-col gap-6">
-                    <div className="flex flex-col xl:flex-row gap-6 items-start">
+                    <div className="w-full">
                         {/* Filters Panel */}
-                        <div className="glass-panel p-5 flex-1 w-full">
+                        <div className="glass-panel p-5 w-full">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                                     <Filter className="w-5 h-5" /> {t('filters')}
@@ -790,10 +815,10 @@ function App() {
                                     >
                                         <option value="">{t('allTypes')}</option>
                                         <option value="Benzyna">Benzyna</option>
-                                        <option value="Diesel">Diesel</option>
+                                        <option value="Olej Napędowy">{lang === 'pl' ? 'Diesel (Olej Napędowy)' : 'Diesel'}</option>
+                                        <option value="Autogaz">{lang === 'pl' ? 'LPG (Autogaz)' : 'LPG'}</option>
                                         <option value="Hybryda">Hybryda</option>
-                                        <option value="Elektryczny">Elektryczny</option>
-                                        <option value="LPG">LPG</option>
+                                        <option value="Alternatywne">Alternatywne</option>
                                     </select>
                                 </div>
 
@@ -933,60 +958,6 @@ function App() {
                             </div>
                         </div>
 
-                        {/* Saved Searches Panel */}
-                        <div className="glass-panel p-5 border-l-4 border-l-emerald-500 w-full xl:w-96 shrink-0">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                                    <Bookmark className="w-5 h-5 text-emerald-400" /> {t('savedSearches')}
-                                </h3>
-                                <button 
-                                    onClick={() => {
-                                        fetchSavedSearches();
-                                        showToast(t('savedSearchesRefreshed'), 'info');
-                                    }}
-                                    className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all border border-slate-700"
-                                >
-                                    {t('refreshCounts')}
-                                </button>
-                            </div>
-
-                            <div className="space-y-2">
-                                {savedSearches.length === 0 ? (
-                                    <p className="text-xs text-slate-500 italic">{t('noSavedSearches')}</p>
-                                ) : (
-                                    savedSearches.map(ss => (
-                                        <div
-                                            key={ss.id}
-                                            onClick={() => applySavedSearch(ss.query_string)}
-                                            className="flex items-center justify-between p-3 rounded bg-slate-800/50 hover:bg-slate-700 cursor-pointer transition-colors group border border-transparent hover:border-slate-600"
-                                        >
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-medium text-slate-200 group-hover:text-blue-400 transition-colors">
-                                                    {ss.name}
-                                                </span>
-                                                <span className="text-[10px] text-slate-500 truncate max-w-[150px]">
-                                                    {ss.query_string ? ss.query_string.replace(/&/g, ', ').replace(/_/g, ' ') : t('allOffers')}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                {ss.new_count > 0 && (
-                                                    <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]">
-                                                        {ss.new_count}
-                                                    </span>
-                                                )}
-                                                <button
-                                                    onClick={(e) => deleteSavedSearch(ss.id, e)}
-                                                    className="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1"
-                                                    title="Delete search"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
                     </div>
 
                     <div className="w-full">
@@ -1098,6 +1069,7 @@ function App() {
                     </div>
                 </div>
             </div>
+
             {showSaveModal && (
                 <SaveSearchModal 
                     onSave={saveCurrentSearch} 
@@ -1122,6 +1094,81 @@ function App() {
                 >
                     <ArrowUp className="w-6 h-6" />
                 </button>
+            )}
+
+            {/* Saved Searches Side Drawer */}
+            <div className={`fixed inset-y-0 right-0 z-[120] w-full sm:w-96 bg-slate-900 border-l border-slate-800 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] transform transition-transform duration-300 ease-in-out ${showSavedDrawer ? 'translate-x-0' : 'translate-x-full'}`}>
+                {/* Drawer Header */}
+                <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/90 backdrop-blur-sm sticky top-0 z-10">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                        <Bookmark className="text-emerald-400 w-5 h-5" /> {t('savedSearches')}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                        <button 
+                            onClick={() => {
+                                fetchSavedSearches();
+                                showToast(t('savedSearchesRefreshed'), 'info');
+                            }}
+                            className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-emerald-400 transition-colors"
+                            title={t('refreshCounts')}
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                        </button>
+                        <button onClick={() => setShowSavedDrawer(false)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Drawer Content */}
+                <div className="p-6 overflow-y-auto h-[calc(100%-80px)] custom-scrollbar">
+                    <div className="space-y-3">
+                        {savedSearches.length === 0 ? (
+                            <div className="text-center py-12">
+                                <Bookmark className="w-12 h-12 text-slate-800 mx-auto mb-4" />
+                                <p className="text-sm text-slate-500 italic">{t('noSavedSearches')}</p>
+                            </div>
+                        ) : (
+                            savedSearches.map(ss => (
+                                <div
+                                    key={ss.id}
+                                    onClick={() => {
+                                        applySavedSearch(ss.query_string);
+                                        if (window.innerWidth < 640) setShowSavedDrawer(false);
+                                    }}
+                                    className="flex flex-col p-4 rounded-xl bg-slate-800/40 hover:bg-slate-800 border border-slate-700/50 hover:border-blue-500/50 cursor-pointer transition-all group"
+                                >
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm font-bold text-slate-200 group-hover:text-blue-400 transition-colors">
+                                            {ss.name}
+                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            {ss.new_count > 0 && (
+                                                <span className="bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.4)]">
+                                                    {ss.new_count}
+                                                </span>
+                                            )}
+                                            <button
+                                                onClick={(e) => deleteSavedSearch(ss.id, e)}
+                                                className="text-slate-600 hover:text-rose-500 p-1 transition-colors"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <span className="text-[10px] text-slate-500 break-all line-clamp-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                                        {ss.query_string ? ss.query_string.replace(/&/g, ' • ').replace(/=/g, ': ') : t('allOffers')}
+                                    </span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Drawer Backdrop */}
+            {showSavedDrawer && (
+                <div className="fixed inset-0 z-[115] bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowSavedDrawer(false)}></div>
             )}
         </>
     );
