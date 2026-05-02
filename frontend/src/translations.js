@@ -9,6 +9,7 @@ export const translations = {
         onlyNew: "Only New",
         favorites: "Favorites",
         hasPrice: "Has Price",
+        showArchived: "Archived",
         search: "Search",
         keywords: "Keywords...",
         sortBy: "Sort By",
@@ -78,7 +79,8 @@ export const translations = {
         scrapeTriggered: "Scraper started!",
         pageSize: "Page Size",
         infiniteScroll: "Infinite Scroll",
-        loadingMore: "Loading more..."
+        loadingMore: "Loading more...",
+        savedSearchesRefreshed: "Saved searches refreshed!"
     },
     pl: {
         title: "Brzozowiak Intelligence",
@@ -90,6 +92,7 @@ export const translations = {
         onlyNew: "Tylko nowe",
         favorites: "Ulubione",
         hasPrice: "Z ceną",
+        showArchived: "Zarchiwizowane",
         search: "Szukaj",
         keywords: "Słowa kluczowe...",
         sortBy: "Sortuj według",
@@ -162,6 +165,7 @@ export const translations = {
         scrapeTriggered: "Pobieranie ofert rozpoczęte!",
         pageSize: "Rozmiar strony",
         infiniteScroll: "Nieskończone przewijanie",
-        loadingMore: "Ładowanie więcej..."
+        loadingMore: "Ładowanie więcej...",
+        savedSearchesRefreshed: "Zapisane wyszukiwania odświeżone!"
     }
 };

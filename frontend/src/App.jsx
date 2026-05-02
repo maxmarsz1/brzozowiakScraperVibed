@@ -314,6 +314,7 @@ function App() {
     const [onlyNew, setOnlyNew] = useState(false);
     const [onlyFavorites, setOnlyFavorites] = useState(false);
     const [onlyWithPrice, setOnlyWithPrice] = useState(false);
+    const [showArchived, setShowArchived] = useState(false);
     const [excludeBullshit, setExcludeBullshit] = useState(false);
     const [pageSize, setPageSize] = useState(18);
     const [isInfinite, setIsInfinite] = useState(false);
@@ -364,6 +365,7 @@ function App() {
             if (onlyNew) url += `&is_seen=false`;
             if (onlyFavorites) url += `&is_favorite=true`;
             if (onlyWithPrice) url += `&has_price=true`;
+            if (showArchived) url += `&is_archived=true`;
             if (publishedAfter) url += `&published_after=${encodeURIComponent(publishedAfter)}`;
             if (publishedBefore) url += `&published_before=${encodeURIComponent(publishedBefore)}`;
 
@@ -444,12 +446,12 @@ function App() {
         } else {
             fetchOffers(false);
         }
-    }, [page, ordering, debouncedSearch, brandFilter, fuelFilter, debouncedYearMin, debouncedYearMax, debouncedPriceMin, debouncedPriceMax, debouncedMileageMin, debouncedMileageMax, onlyNew, onlyFavorites, onlyWithPrice, excludeBullshit, publishedAfter, publishedBefore, pageSize, isInfinite]);
+    }, [page, ordering, debouncedSearch, brandFilter, fuelFilter, debouncedYearMin, debouncedYearMax, debouncedPriceMin, debouncedPriceMax, debouncedMileageMin, debouncedMileageMax, onlyNew, onlyFavorites, onlyWithPrice, showArchived, excludeBullshit, publishedAfter, publishedBefore, pageSize, isInfinite]);
 
     useEffect(() => {
         setPage(1);
         setAllResults([]);
-    }, [ordering, debouncedSearch, brandFilter, fuelFilter, debouncedYearMin, debouncedYearMax, debouncedPriceMin, debouncedPriceMax, debouncedMileageMin, debouncedMileageMax, onlyNew, onlyFavorites, onlyWithPrice, excludeBullshit, publishedAfter, publishedBefore, pageSize, isInfinite]);
+    }, [ordering, debouncedSearch, brandFilter, fuelFilter, debouncedYearMin, debouncedYearMax, debouncedPriceMin, debouncedPriceMax, debouncedMileageMin, debouncedMileageMax, onlyNew, onlyFavorites, onlyWithPrice, showArchived, excludeBullshit, publishedAfter, publishedBefore, pageSize, isInfinite]);
 
     // Infinite Scroll Observer
     useEffect(() => {
@@ -494,6 +496,7 @@ function App() {
         setOnlyNew(false);
         setOnlyFavorites(false);
         setOnlyWithPrice(false);
+        setShowArchived(false);
         setExcludeBullshit(false);
         setPublishedAfter('');
         setPublishedBefore('');
@@ -536,6 +539,7 @@ function App() {
         if (onlyNew) params.append('is_seen', 'false');
         if (onlyFavorites) params.append('is_favorite', 'true');
         if (onlyWithPrice) params.append('has_price', 'true');
+        if (showArchived) params.append('is_archived', 'true');
         if (publishedAfter) params.append('published_after', publishedAfter);
         if (publishedBefore) params.append('published_before', publishedBefore);
 
@@ -575,6 +579,7 @@ function App() {
         if (onlyNew) params.append('is_seen', 'false');
         if (onlyFavorites) params.append('is_favorite', 'true');
         if (onlyWithPrice) params.append('has_price', 'true');
+        if (showArchived) params.append('is_archived', 'true');
         if (publishedAfter) params.append('published_after', publishedAfter);
         if (publishedBefore) params.append('published_before', publishedBefore);
 
@@ -596,6 +601,7 @@ function App() {
         setOnlyNew(params.get('is_seen') === 'false');
         setOnlyFavorites(params.get('is_favorite') === 'true');
         setOnlyWithPrice(params.get('has_price') === 'true');
+        setShowArchived(params.get('is_archived') === 'true');
         setExcludeBullshit(params.get('price_min') === '500');
         setPublishedAfter(params.get('published_after') || "");
         setPublishedBefore(params.get('published_before') || "");
@@ -678,12 +684,6 @@ function App() {
                         </p>
                     </div>
                     <div className="text-slate-300 text-sm flex items-center gap-4">
-                        <button
-                            onClick={fetchSavedSearches}
-                            className="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded text-xs text-slate-300 transition-colors border border-slate-700"
-                        >
-                            {t('refreshCounts')}
-                        </button>
                     </div>
                 </header>
 
@@ -721,6 +721,14 @@ function App() {
                                         </div>
                                         <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">{t('hasPrice')}</span>
                                         <input type="checkbox" className="hidden" checked={onlyWithPrice} onChange={(e) => setOnlyWithPrice(e.target.checked)} />
+                                    </label>
+
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${showArchived ? 'bg-violet-500 border-violet-500' : 'bg-slate-800 border-slate-600 group-hover:border-violet-500'}`}>
+                                            {showArchived && <Check className="w-3 h-3 text-white" />}
+                                        </div>
+                                        <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">{t('showArchived')}</span>
+                                        <input type="checkbox" className="hidden" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
                                     </label>
 
                                     <label className="flex items-center gap-2 cursor-pointer group">
@@ -927,9 +935,20 @@ function App() {
 
                         {/* Saved Searches Panel */}
                         <div className="glass-panel p-5 border-l-4 border-l-emerald-500 w-full xl:w-96 shrink-0">
-                            <h3 className="text-lg font-semibold mb-4 text-white flex items-center gap-2">
-                                <Bookmark className="w-5 h-5 text-emerald-400" /> {t('savedSearches')}
-                            </h3>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                    <Bookmark className="w-5 h-5 text-emerald-400" /> {t('savedSearches')}
+                                </h3>
+                                <button 
+                                    onClick={() => {
+                                        fetchSavedSearches();
+                                        showToast(t('savedSearchesRefreshed'), 'info');
+                                    }}
+                                    className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all border border-slate-700"
+                                >
+                                    {t('refreshCounts')}
+                                </button>
+                            </div>
 
                             <div className="space-y-2">
                                 {savedSearches.length === 0 ? (
@@ -1095,7 +1114,7 @@ function App() {
                 />
             ))}
             
-            {showBackToTop && (
+            {showBackToTop && !selectedOffer && (
                 <button
                     onClick={scrollToTop}
                     className="fixed bottom-8 right-8 p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-2xl transition-all hover:scale-110 active:scale-95 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300"

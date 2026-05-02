@@ -55,7 +55,12 @@ class OfferViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         # We cast the char fields to numbers so sorting and range filtering work correctly
-        return Offer.objects.filter(is_archived=False).annotate(
+        is_archived = self.request.query_params.get('is_archived')
+        if is_archived == 'true':
+            queryset = Offer.objects.filter(is_archived=True)
+        else:
+            queryset = Offer.objects.filter(is_archived=False)
+        return queryset.annotate(
             year_num=Cast('year', IntegerField()),
             price_num=Cast('price', FloatField()),
             mileage_num=Cast('mileage', IntegerField())

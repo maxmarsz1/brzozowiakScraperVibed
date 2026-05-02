@@ -217,10 +217,17 @@ You can choose how the frontend is served in production by setting `FRONTEND_MOD
 ---
 
 ## Development Mode
-
 To run in development mode with hot-reloading:
 
-1. Set `DJANGO_DEBUG=True` in `.env`.
-2. Run `docker compose --profile dev up`.
-3. Frontend will be on `http://localhost:5173`.
-4. Backend will be on `http://localhost:8000`.
+1.  **Configure `.env`**:
+    *   Set `DJANGO_DEBUG=True`.
+    *   Set `BACKEND_COMMAND="python manage.py runserver 0.0.0.0:8000"`.
+2.  **Start Services**:
+    ```bash
+    docker compose --profile dev up
+    ```
+    *   **Frontend**: `http://localhost:5173` (Vite with hot-reload)
+    *   **Backend**: `http://localhost:8000` (Django with hot-reload)
+
+> [!TIP]
+> The backend now automatically supports hot-reloading because the code directory is mapped as a volume. Changes to your Python files will trigger an automatic restart of the Django development server.

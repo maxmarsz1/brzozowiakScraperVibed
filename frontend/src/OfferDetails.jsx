@@ -1,11 +1,154 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, X, ExternalLink, Calendar, Gauge, Fuel, Car, Palette, Box, Settings, Globe, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin, X, ExternalLink, Calendar, Gauge, Fuel, Car, Palette, Box, Settings, Globe, ShieldCheck, ChevronLeft, ChevronRight, Maximize } from 'lucide-react';
+
+const ZoomableImage = ({ src, alt, className, onClick, isModal = false }) => {
+    const imgRef = useRef(null);
+    const [zoom, setZoom] = useState(1);
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [isHovered, setIsHovered] = useState(false);
+    const [transformOrigin, setTransformOrigin] = useState('center center');
+    const hasMoved = useRef(false);
+
+    useEffect(() => {
+        setZoom(1);
+        setPosition({ x: 0, y: 0 });
+        setTransformOrigin('center center');
+        setIsHovered(false);
+        setIsDragging(false);
+    }, [src]);
+
+    const handleMouseMove = (e) => {
+        if (!isModal) {
+            if (!imgRef.current) return;
+            const rect = imgRef.current.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            setTransformOrigin(`${x}% ${y}%`);
+        } else if (isDragging && zoom > 1) {
+            hasMoved.current = true;
+            setPosition({
+                x: e.clientX - dragStart.x,
+                y: e.clientY - dragStart.y
+            });
+        }
+    };
+
+    const handleMouseDown = (e) => {
+        if (isModal) {
+            hasMoved.current = false;
+        }
+        if (isModal && zoom > 1) {
+            e.preventDefault();
+            setIsDragging(true);
+            setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    const handleClick = (e) => {
+        if (isModal) {
+            e.stopPropagation();
+            if (hasMoved.current) {
+                hasMoved.current = false;
+                return;
+            }
+            if (zoom > 1) {
+                setZoom(1);
+                setPosition({ x: 0, y: 0 });
+                setTransformOrigin('center center');
+            } else {
+                if (!imgRef.current) return;
+                const rect = imgRef.current.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const clickY = e.clientY - rect.top;
+
+                const newZoom = 2.5;
+                // Calculate translation to center the clicked point
+                const newPosX = (rect.width / 2 - clickX) * (newZoom - 1);
+                const newPosY = (rect.height / 2 - clickY) * (newZoom - 1);
+
+                setTransformOrigin('center center');
+                setZoom(newZoom);
+                setPosition({ x: newPosX, y: newPosY });
+            }
+        } else if (onClick) {
+            onClick(e);
+        }
+    };
+
+    const handleWheel = (e) => {
+        if (isModal) {
+            e.preventDefault();
+            setZoom((prev) => {
+                const delta = e.deltaY > 0 ? -0.3 : 0.3;
+                const newZoom = Math.min(Math.max(prev + delta, 1), 5);
+                if (newZoom === 1) setPosition({ x: 0, y: 0 });
+                return newZoom;
+            });
+        }
+    };
+
+    const currentZoom = isModal ? zoom : (isHovered ? 2 : 1);
+
+    return (
+        <div
+            className={`relative w-full h-full flex items-center justify-center overflow-hidden ${isModal && zoom > 1 ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={() => {
+                setIsDragging(false);
+                setIsHovered(false);
+            }}
+            onWheel={handleWheel}
+        >
+            <img
+                ref={imgRef}
+                src={src}
+                alt={alt}
+                className={`${className} select-none`}
+                style={{
+                    transform: isModal ? `translate(${position.x}px, ${position.y}px) scale(${zoom})` : `scale(${currentZoom})`,
+                    transformOrigin: transformOrigin,
+                    transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+                }}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseDown={handleMouseDown}
+                onClick={handleClick}
+                draggable={false}
+            />
+        </div>
+    );
+};
 
 const OfferDetails = ({ offer, onBack, t }) => {
     const modalRef = useRef(null);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     const images = offer.images && offer.images.length > 0 ? offer.images : (offer.img && offer.img !== 'NULL' ? [offer.img] : []);
+    const [previewOpen, setPreviewOpen] = useState(false);
+
+    useEffect(() => {
+        setPreviewOpen(false);
+        setCurrentImageIndex(0);
+    }, [offer.offer_id]);
+
+    useEffect(() => {
+        if (!previewOpen) return;
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') setPreviewOpen(false);
+            if (e.key === 'ArrowRight' && images.length > 1) nextImage();
+            if (e.key === 'ArrowLeft' && images.length > 1) prevImage();
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [previewOpen, images.length]);
 
     const nextImage = () => {
         setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -75,13 +218,27 @@ const OfferDetails = ({ offer, onBack, t }) => {
                     <div className="flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:grid-rows-[auto_1fr_auto] lg:items-start lg:gap-8">
                         {/* Main Image */}
                         <div className="glass-panel overflow-hidden relative order-1 lg:col-start-1 lg:row-start-1">
-                                <div className="relative bg-slate-800/80 flex items-center justify-center overflow-hidden rounded-xl">
+                                <div className="relative bg-slate-800/80 flex items-center justify-center overflow-hidden rounded-xl h-[400px]">
                                     {images.length > 0 ? (
                                         <>
                                             {/* Blurred background fill */}
                                             <img src={images[currentImageIndex]} aria-hidden="true" className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-30 pointer-events-none" />
                                             {/* Main image */}
-                                            <img src={images[currentImageIndex]} alt={offer.title} className="relative w-full h-auto max-h-[500px] object-contain rounded-lg drop-shadow-2xl transition-opacity duration-300" />
+                                            <ZoomableImage
+                                                key={images[currentImageIndex]}
+                                                src={images[currentImageIndex]}
+                                                alt={offer.title}
+                                                className="relative w-full h-full object-contain rounded-lg drop-shadow-2xl transition-opacity duration-300"
+                                                onClick={() => setPreviewOpen(true)}
+                                            />
+
+                                            {/* Fullscreen button */}
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setPreviewOpen(true); }}
+                                                className="absolute bottom-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors"
+                                            >
+                                                <Maximize className="w-5 h-5" />
+                                            </button>
 
                                             {images.length > 1 && (
                                                 <>
@@ -179,6 +336,53 @@ const OfferDetails = ({ offer, onBack, t }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Full-screen image preview modal */}
+            {previewOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-200" onClick={() => setPreviewOpen(false)}>
+                    {/* Close button */}
+                    <button
+                        onClick={() => setPreviewOpen(false)}
+                        className="absolute top-4 right-4 z-[110] p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+
+                    {/* Navigation arrows */}
+                    {images.length > 1 && (
+                        <>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[110]"
+                            >
+                                <ChevronLeft className="w-8 h-8" />
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[110]"
+                            >
+                                <ChevronRight className="w-8 h-8" />
+                            </button>
+                        </>
+                    )}
+
+                    {/* Image */}
+                    <ZoomableImage
+                        key={images[currentImageIndex]}
+                        src={images[currentImageIndex]}
+                        alt={offer.title}
+                        className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
+                        isModal={true}
+                    />
+
+                    {/* Image counter */}
+                    {images.length > 1 && (
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/80 text-sm bg-black/40 px-4 py-2 rounded-full">
+                            {currentImageIndex + 1} / {images.length}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 };
