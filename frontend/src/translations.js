@@ -8,7 +8,7 @@ export const translations = {
         filters: "Filters",
         onlyNew: "Only New",
         favorites: "Favorites",
-        hasPrice: "Has Price",
+        hideWithoutPrice: "Hide without price",
         showArchived: "Archived",
         search: "Search",
         keywords: "Keywords...",
@@ -82,7 +82,9 @@ export const translations = {
         loadingMore: "Loading more...",
         savedSearchesRefreshed: "Saved searches refreshed!",
         alternatives: "Alternatives",
-        newResults: "New Results!"
+        newResults: "New Results!",
+        telegramNotifications: "Telegram Notifications",
+        telegramNotConfigured: "Telegram bot is not configured in .env"
     },
     pl: {
         title: "Brzozowiak Intelligence",
@@ -93,7 +95,7 @@ export const translations = {
         filters: "Filtry",
         onlyNew: "Tylko nowe",
         favorites: "Ulubione",
-        hasPrice: "Z ceną",
+        hideWithoutPrice: "Ukryj bez ceny",
         showArchived: "Zarchiwizowane",
         search: "Szukaj",
         keywords: "Słowa kluczowe...",
@@ -170,6 +172,8 @@ export const translations = {
         loadingMore: "Ładowanie więcej...",
         savedSearchesRefreshed: "Zapisane wyszukiwania odświeżone!",
         alternatives: "Alternatywne",
-        newResults: "Nowe wyniki!"
+        newResults: "Nowe wyniki!",
+        telegramNotifications: "Powiadomienia Telegram",
+        telegramNotConfigured: "Bot Telegram nie jest skonfigurowany w pliku .env"
     }
 };

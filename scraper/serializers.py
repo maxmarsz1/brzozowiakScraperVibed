@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Offer, SavedSearch, ScraperStatus
+import os
+from .models import Offer, SavedSearch, ScraperStatus, ScraperLog
 from django.http import QueryDict
 from django.db.models import FloatField, IntegerField
 from django.db.models.functions import Cast
@@ -44,6 +45,18 @@ class SavedSearchSerializer(serializers.ModelSerializer):
         return qs.count()
 
 class ScraperStatusSerializer(serializers.ModelSerializer):
+    telegram_configured = serializers.SerializerMethodField()
+
     class Meta:
         model = ScraperStatus
+        fields = '__all__'
+
+    def get_telegram_configured(self, obj):
+        token = os.environ.get('TELEGRAM_BOT_TOKEN')
+        chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+        return bool(token and chat_id)
+
+class ScraperLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScraperLog
         fields = '__all__'

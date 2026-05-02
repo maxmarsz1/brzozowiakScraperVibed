@@ -16,6 +16,8 @@ services:
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost 127.0.0.1 backend}
       - DB_PATH=/data/db.sqlite3
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-your-secret-key}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
     command: ${BACKEND_COMMAND:-gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3}
 
   frontend:
@@ -67,6 +69,8 @@ services:
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost 127.0.0.1 backend}
       - DB_PATH=/data/db.sqlite3
       - PYTHONUNBUFFERED=1
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
     entrypoint: []
     command: python manage.py run_scraper
     depends_on:

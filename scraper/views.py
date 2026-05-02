@@ -7,10 +7,14 @@ from django.shortcuts import render
 from django.db.models import FloatField, IntegerField, CharField
 from django.db.models.functions import Cast, Replace
 from django.db.models import Value
-from .models import Offer, SavedSearch, ScraperStatus
-from .serializers import OfferSerializer, SavedSearchSerializer, ScraperStatusSerializer
+from .models import Offer, SavedSearch, ScraperStatus, ScraperLog
+from .serializers import OfferSerializer, SavedSearchSerializer, ScraperStatusSerializer, ScraperLogSerializer
+
+class CharInFilter(filters.BaseInFilter, filters.CharFilter):
+    pass
 
 class OfferFilter(filters.FilterSet):
+    fuel = CharInFilter(field_name='fuel', lookup_expr='in')
     year_min = filters.NumberFilter(field_name='year_num', lookup_expr='gte')
     year_max = filters.NumberFilter(field_name='year_num', lookup_expr='lte')
     price_min = filters.NumberFilter(field_name='price_num', lookup_expr='gte')
@@ -19,6 +23,7 @@ class OfferFilter(filters.FilterSet):
     mileage_max = filters.NumberFilter(field_name='mileage_num', lookup_expr='lte')
     is_seen = filters.BooleanFilter(field_name='is_seen')
     is_favorite = filters.BooleanFilter(field_name='is_favorite')
+    created_before = filters.IsoDateTimeFilter(field_name='created_at', lookup_expr='lt')
     has_price = filters.BooleanFilter(method='filter_has_price')
     published_after = filters.CharFilter(method='filter_published_after')
     published_before = filters.CharFilter(method='filter_published_before')
@@ -97,6 +102,12 @@ class ScraperStatusViewSet(viewsets.ReadOnlyModelViewSet):
         status.force_scrape = True
         status.save()
         return Response({'status': 'Scrape triggered'})
+
+class ScraperLogViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = ScraperLogSerializer
+
+    def get_queryset(self):
+        return ScraperLog.objects.all().order_by('-timestamp')[:50]
 
 def index(request):
     return render(request, 'scraper/index.html')

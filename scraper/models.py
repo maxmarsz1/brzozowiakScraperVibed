@@ -44,6 +44,7 @@ class Offer(models.Model):
 class SavedSearch(models.Model):
     name = models.CharField(max_length=200)
     query_string = models.TextField()
+    telegram_notifications = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -58,3 +59,10 @@ class ScraperStatus(models.Model):
 
     def __str__(self):
         return f"Scraper Status: {self.next_run}"
+
+class ScraperLog(models.Model):
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-timestamp']

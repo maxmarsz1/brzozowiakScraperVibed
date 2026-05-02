@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, X, ExternalLink, Calendar, Gauge, Fuel, Car, Palette, Box, Settings, Globe, ShieldCheck, ChevronLeft, ChevronRight, Maximize } from 'lucide-react';
+import { MapPin, X, ExternalLink, Calendar, Gauge, Fuel, Car, Palette, Box, Settings, Globe, ShieldCheck, ChevronLeft, ChevronRight, Maximize, Heart } from 'lucide-react';
 
 const ZoomableImage = ({ src, alt, className, onClick, isModal = false }) => {
     const imgRef = useRef(null);
@@ -125,7 +125,7 @@ const ZoomableImage = ({ src, alt, className, onClick, isModal = false }) => {
     );
 };
 
-const OfferDetails = ({ offer, onBack, t }) => {
+const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
     const modalRef = useRef(null);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -198,23 +198,23 @@ const OfferDetails = ({ offer, onBack, t }) => {
                 onClick={onBack}
             ></div>
 
-            {/* Modal Content */}
+            {/* Modal Content Wrapper */}
             <div
-                ref={modalRef}
-                className="relative w-full max-w-6xl max-h-full overflow-y-auto custom-scrollbar bg-slate-900 border border-slate-700/60 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 duration-300"
+                className="relative w-full max-w-6xl max-h-full flex flex-col bg-slate-900 border border-slate-700/60 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 duration-300"
             >
-                {/* Sticky Header with Close Button */}
-                <div className="sticky top-0 z-20 flex justify-between items-center p-4 border-b border-slate-800 bg-slate-900/90 backdrop-blur-sm">
-                    <div className="text-sm font-medium text-slate-400">{t('offerDetails')}</div>
-                    <button
-                        onClick={onBack}
-                        className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-full transition-colors group"
-                    >
-                        <X className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-                    </button>
-                </div>
+                {/* Fixed Close Button (relative to the modal box) */}
+                <button
+                    onClick={onBack}
+                    className="absolute top-4 right-4 z-40 p-2 bg-slate-950/60 hover:bg-slate-800 text-white rounded-full backdrop-blur-md border border-slate-700/50 shadow-2xl transition-all hover:scale-110 group"
+                >
+                    <X className="w-6 h-6 group-hover:rotate-90 transition-transform" />
+                </button>
 
-                <div className="p-6 md:p-8">
+                {/* Scrollable Content Container */}
+                <div 
+                    ref={modalRef}
+                    className="w-full h-full overflow-y-auto custom-scrollbar p-6 md:p-8"
+                >
                     <div className="flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:grid-rows-[auto_1fr_auto] lg:items-start lg:gap-8">
                         {/* Main Image */}
                         <div className="glass-panel overflow-hidden relative order-1 lg:col-start-1 lg:row-start-1">
@@ -289,9 +289,16 @@ const OfferDetails = ({ offer, onBack, t }) => {
                                 </div>
                             )}
                         {/* Pricing & Main Info */}
-                        <div className="glass-panel p-6 md:p-8 lg:sticky lg:top-24 order-2 lg:col-start-2 lg:row-start-1 lg:row-span-3">
+                        <div className="glass-panel p-6 md:p-8 lg:sticky lg:top-24 order-2 lg:col-start-2 lg:row-start-1 lg:row-span-3 relative">
+                                <button
+                                    onClick={() => onToggleFavorite(offer.id, offer.is_favorite)}
+                                    className="absolute top-6 right-6 p-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-rose-400 rounded-xl transition-all border border-slate-700 shadow-xl group/fav hover:scale-110 z-10"
+                                    title={offer.is_favorite ? t('removeFavorite') : t('addFavorite')}
+                                >
+                                    <Heart className={`w-5 h-5 transition-colors ${offer.is_favorite ? 'fill-rose-500 text-rose-500' : 'text-slate-400 group-hover/fav:text-rose-400'}`} />
+                                </button>
                                 <div className="text-sm text-slate-500 mb-2 font-mono">{t('id')}: {offer.offer_id}</div>
-                                <h1 className="text-3xl font-extrabold text-white mb-4 leading-tight">{offer.title}</h1>
+                                <h1 className="text-3xl font-extrabold text-white mb-4 leading-tight pr-12">{offer.title}</h1>
 
                                 <div className="text-4xl font-black text-emerald-400 mb-6 bg-emerald-500/10 inline-block px-4 py-2 rounded-xl border border-emerald-500/20">
                                     {offer.price ? `${String(parseInt(offer.price, 10)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')} PLN` : t('askPrice')}
