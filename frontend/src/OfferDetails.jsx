@@ -205,24 +205,7 @@ const OfferDetails = ({ offer, onBack, t }) => {
             >
                 {/* Sticky Header with Close Button */}
                 <div className="sticky top-0 z-20 flex justify-between items-center p-4 border-b border-slate-800 bg-slate-900/90 backdrop-blur-sm">
-                    <div className="flex items-center gap-4">
-                        <div className="text-sm font-medium text-slate-400">{t('offerDetails')}</div>
-                        {savedSearches && savedSearches.some(ss => ss.new_count > 0) && (
-                            <button 
-                                onClick={onOpenSaved}
-                                className="relative flex items-center gap-2 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg border border-slate-700 transition-all group/marker"
-                            >
-                                <Bookmark className="w-3.5 h-3.5" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider hidden sm:inline">{t('newResults')}</span>
-                                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500 text-[7px] font-bold text-white flex items-center justify-center">
-                                        {savedSearches.reduce((acc, ss) => acc + (ss.new_count || 0), 0)}
-                                    </span>
-                                </span>
-                            </button>
-                        )}
-                    </div>
+                    <div className="text-sm font-medium text-slate-400">{t('offerDetails')}</div>
                     <button
                         onClick={onBack}
                         className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-full transition-colors group"

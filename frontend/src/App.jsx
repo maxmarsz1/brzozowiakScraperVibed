@@ -636,16 +636,7 @@ function App() {
     return (
         <>
             {selectedOffer && (
-                <OfferDetails 
-                    offer={selectedOffer} 
-                    onBack={handleBack} 
-                    t={t} 
-                    savedSearches={savedSearches}
-                    onOpenSaved={() => {
-                        handleBack();
-                        setShowSavedDrawer(true);
-                    }}
-                />
+                <OfferDetails offer={selectedOffer} onBack={handleBack} t={t} />
             )}
             <div className="min-h-screen p-6 custom-scrollbar">
                 <header className="mb-8 flex justify-between items-end border-b border-slate-700 pb-4">
