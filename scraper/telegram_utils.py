@@ -69,21 +69,31 @@ def offer_matches_search(offer, query_string):
         if brand_filter and brand_filter.lower() not in (offer.brand or "").lower():
             return False
             
-        # Fuel check
-        fuel_filter = get_p('fuel')
-        if fuel_filter and fuel_filter != (offer.fuel or ""):
-            return False
+        # Fuel check - supports multiple values (e.g., fuel=Benzyna&fuel=Diesel or fuel=Benzyna,Diesel)
+        fuel_params = params.get('fuel')
+        if fuel_params:
+            # Flatten any comma-separated strings into a single set of allowed fuels
+            allowed_fuels = set()
+            for f in fuel_params:
+                for part in f.split(','):
+                    allowed_fuels.add(part.strip())
+            
+            if (offer.fuel or "") not in allowed_fuels:
+                return False
             
         # Price check
         price_min = get_p('price_min')
         price_max = get_p('price_max')
+        # Filter out "trash" prices if the flag was set (handled by numeric range usually)
         if offer.price:
             try:
                 price_val = int(offer.price)
                 if price_min and price_val < int(price_min): return False
                 if price_max and price_val > int(price_max): return False
             except ValueError:
-                pass # If price isn't a number, skip numeric filters
+                # If filter is set but price is not numeric (e.g. "Ask"), 
+                # we exclude it if a numeric range is required
+                if price_min or price_max: return False
                 
         # Year check
         year_min = get_p('year_min')
@@ -94,14 +104,16 @@ def offer_matches_search(offer, query_string):
                 if year_min and year_val < int(year_min): return False
                 if year_max and year_val > int(year_max): return False
             except ValueError:
-                pass
+                if year_min or year_max: return False
                 
         # Keywords check
         search_filter = get_p('search')
         if search_filter:
             search_filter = search_filter.lower()
             text_to_search = f"{(offer.title or '').lower()} {(offer.description or '').lower()}"
-            if search_filter not in text_to_search:
+            # Support multiple space-separated keywords
+            keywords = search_filter.split()
+            if not all(k in text_to_search for k in keywords):
                 return False
 
         return True

@@ -909,7 +909,9 @@ function App() {
         if (search) params.append('search', search);
         if (ordering) params.append('ordering', ordering);
         if (brandFilter) params.append('brand', brandFilter);
-        if (fuelFilter.length > 0) params.append('fuel', fuelFilter.join(','));
+        if (fuelFilter.length > 0) {
+            fuelFilter.forEach(f => params.append('fuel', f));
+        }
         if (yearMin) params.append('year_min', yearMin);
         if (yearMax) params.append('year_max', yearMax);
 
@@ -1105,10 +1107,10 @@ function App() {
                                 </button>
                             </div>
                         </div>
-                        <p className="text-slate-400 text-sm flex flex-wrap items-center gap-y-2">
-                            {t('subtitle')}
+                        <div className="text-slate-400 text-sm flex flex-col md:flex-row md:items-center gap-1 sm:gap-2">
+                            <span>{t('subtitle')}</span>
                             {scraperStatus && (
-                                <span className="flex flex-wrap items-center gap-1.5 md:ml-3 md:pl-3 md:border-l border-slate-700">
+                                <div className="flex items-center gap-1.5 md:ml-2 md:pl-3 md:border-l border-slate-700/50">
                                     <span className={`w-1.5 h-1.5 rounded-full ${(scraperStatus.is_running || isTriggering) ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-slate-500'}`}></span>
                                     <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
                                         {(scraperStatus.is_running || isTriggering) ? (
@@ -1134,9 +1136,9 @@ function App() {
                                             </span>
                                         )}
                                     </span>
-                                </span>
+                                </div>
                             )}
-                        </p>
+                        </div>
                     </div>
                     <div className="text-slate-300 text-sm flex flex-wrap items-center gap-3 w-full md:w-auto">
                         <button
