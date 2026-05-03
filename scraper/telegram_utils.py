@@ -27,20 +27,20 @@ def send_telegram_message(message):
         return False
 
 def format_offer_message(offer, search_name):
-    """Formats an offer into a clean Telegram message."""
-    title = offer.title or "Unknown Offer"
-    price = f"{offer.price} PLN" if offer.price else "Ask for price"
-    year = offer.year or "N/A"
-    fuel = offer.fuel or "N/A"
-    location = offer.location or "Unknown"
+    """Formats an offer into a clean Telegram message in Polish."""
+    title = offer.title or "Nieznany tytuł"
+    price = f"{offer.price} PLN" if offer.price else "Zapytaj o cenę"
+    year = offer.year or "Brak danych"
+    fuel = offer.fuel or "Brak danych"
+    location = offer.location or "Nieznana lokalizacja"
     
     message = (
-        f"🔔 <b>New Match: {search_name}</b>\n\n"
+        f"🔔 <b>Nowe dopasowanie: {search_name}</b>\n\n"
         f"🚗 <b>{title}</b>\n"
-        f"💰 Price: <b>{price}</b>\n"
-        f"📅 Year: {year} | ⛽ {fuel}\n"
+        f"💰 Cena: <b>{price}</b>\n"
+        f"📅 Rok: {year} | ⛽ {fuel}\n"
         f"📍 {location}\n\n"
-        f"🔗 <a href='{offer.url}'>View Offer</a>"
+        f"🔗 <a href='{offer.url}'>Zobacz ogłoszenie</a>"
     )
     return message
 

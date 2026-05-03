@@ -103,6 +103,14 @@ class ScraperStatusViewSet(viewsets.ReadOnlyModelViewSet):
         status.save()
         return Response({'status': 'Scrape triggered'})
 
+    @action(detail=True, methods=['post'])
+    def test_telegram(self, request, pk=None):
+        from .telegram_utils import send_telegram_message
+        success = send_telegram_message("🧪 <b>Wiadomość Testowa</b>\n\nTwoja konfiguracja bota Telegram działa poprawnie!")
+        if success:
+            return Response({'status': 'success', 'message': 'Wiadomość testowa wysłana!'})
+        return Response({'status': 'error', 'message': 'Błąd wysyłania wiadomości. Sprawdź konfigurację.'}, status=400)
+
 class ScraperLogViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ScraperLogSerializer
 

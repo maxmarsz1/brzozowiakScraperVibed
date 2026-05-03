@@ -526,6 +526,28 @@ function App() {
         }
     };
 
+    const handleTestTelegram = async () => {
+        if (!scraperStatus || !scraperStatus.telegram_configured) {
+            showToast(t('telegramNotConfigured') || 'Telegram bot is not configured in .env', 'error');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/scraper_status/${scraperStatus.id}/test_telegram/`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            if (response.ok) {
+                showToast(t('testMessageSent') || 'Test message sent successfully!', 'success');
+            } else {
+                showToast(data.message || 'Failed to send test message', 'error');
+            }
+        } catch (err) {
+            console.error("Failed to test telegram:", err);
+            showToast('Failed to connect to backend', 'error');
+        }
+    };
+
     useEffect(() => {
         if (page === 1) {
             fetchOffers(false);
@@ -1373,6 +1395,20 @@ function App() {
                             ))
                         )}
                     </div>
+
+                    {scraperStatus?.telegram_configured && (
+                        <div className="mt-8 pt-6 border-t border-slate-800">
+                            <button
+                                onClick={handleTestTelegram}
+                                className="w-full py-4 px-4 bg-slate-800/50 hover:bg-emerald-500/10 text-emerald-400 border border-slate-700 hover:border-emerald-500/30 rounded-xl transition-all flex items-center justify-center gap-3 font-bold text-sm group"
+                            >
+                                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+                                    <Send className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                </div>
+                                {t('testTelegram')}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 

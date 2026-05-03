@@ -84,7 +84,9 @@ export const translations = {
         alternatives: "Alternatives",
         newResults: "New Results!",
         telegramNotifications: "Telegram Notifications",
-        telegramNotConfigured: "Telegram bot is not configured in .env"
+        telegramNotConfigured: "Telegram bot is not configured in .env",
+        testTelegram: "Test Bot",
+        testMessageSent: "Test message sent successfully!"
     },
     pl: {
         title: "Brzozowiak Intelligence",
@@ -174,6 +176,8 @@ export const translations = {
         alternatives: "Alternatywne",
         newResults: "Nowe wyniki!",
         telegramNotifications: "Powiadomienia Telegram",
-        telegramNotConfigured: "Bot Telegram nie jest skonfigurowany w pliku .env"
+        telegramNotConfigured: "Bot Telegram nie jest skonfigurowany w pliku .env",
+        testTelegram: "Testuj Bota",
+        testMessageSent: "Wiadomość testowa została wysłana!"
     }
 };
