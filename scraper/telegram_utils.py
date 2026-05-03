@@ -3,13 +3,14 @@ import os
 from django.conf import settings
 from urllib.parse import parse_qs
 
-def send_telegram_message(message):
+def send_telegram_message(message, return_error=False):
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
     
     if not token or not chat_id:
-        print("Telegram credentials missing in environment.")
-        return False
+        err = "Brak konfiguracji Telegram (TOKEN/CHAT_ID) w .env."
+        print(err)
+        return (False, err) if return_error else False
         
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload = {
@@ -21,10 +22,16 @@ def send_telegram_message(message):
     
     try:
         response = requests.post(url, json=payload, timeout=10)
-        return response.status_code == 200
+        if response.status_code == 200:
+            return (True, None) if return_error else True
+        
+        error_detail = f"Błąd Telegram {response.status_code}: {response.text}"
+        print(error_detail)
+        return (False, error_detail) if return_error else False
     except Exception as e:
-        print(f"Failed to send Telegram message: {e}")
-        return False
+        error_detail = f"Błąd połączenia z Telegram: {str(e)}"
+        print(error_detail)
+        return (False, error_detail) if return_error else False
 
 def format_offer_message(offer, search_name):
     """Formats an offer into a clean Telegram message in Polish."""
