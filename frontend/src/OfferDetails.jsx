@@ -213,12 +213,12 @@ const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
                 {/* Scrollable Content Container */}
                 <div 
                     ref={modalRef}
-                    className="w-full h-full overflow-y-auto custom-scrollbar p-6 md:p-8"
+                    className="w-full h-full overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8"
                 >
                     <div className="flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:grid-rows-[auto_1fr_auto] lg:items-start lg:gap-8">
                         {/* Main Image */}
                         <div className="glass-panel overflow-hidden relative order-1 lg:col-start-1 lg:row-start-1">
-                                <div className="relative bg-slate-800/80 flex items-center justify-center overflow-hidden rounded-xl h-[400px]">
+                                <div className="relative bg-slate-800/80 flex items-center justify-center overflow-hidden rounded-xl h-[250px] sm:h-[400px]">
                                     {images.length > 0 ? (
                                         <>
                                             {/* Blurred background fill */}
@@ -268,17 +268,17 @@ const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
                             </div>
 
                         {/* Description */}
-                        <div className="glass-panel p-6 md:p-8 order-3 lg:col-start-1 lg:row-start-2">
-                                <h3 className="text-xl font-bold text-white mb-6 border-b border-slate-700 pb-4">{t('sellerDescription')}</h3>
-                                <div className="text-slate-300 leading-relaxed whitespace-pre-wrap font-light text-sm">
+                        <div className="glass-panel p-5 sm:p-6 md:p-8 order-3 lg:col-start-1 lg:row-start-2">
+                                <h3 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6 border-b border-slate-700 pb-4">{t('sellerDescription')}</h3>
+                                <div className="text-slate-300 leading-relaxed whitespace-pre-wrap font-light text-[13px] sm:text-sm">
                                     {offer.description && offer.description !== 'NULL' ? offer.description : t('noDescription')}
                                 </div>
                             </div>
 
                         {/* Equipment list */}
                         {equipmentList.length > 0 && (
-                            <div className="glass-panel p-6 md:p-8 order-4 lg:col-start-1 lg:row-start-3">
-                                    <h3 className="text-xl font-bold text-white mb-6 border-b border-slate-700 pb-4">{t('equipment')}</h3>
+                            <div className="glass-panel p-5 sm:p-6 md:p-8 order-4 lg:col-start-1 lg:row-start-3">
+                                    <h3 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6 border-b border-slate-700 pb-4">{t('equipment')}</h3>
                                     <div className="flex flex-wrap gap-2">
                                         {equipmentList.map((item, idx) => (
                                             <span key={idx} className="bg-slate-800 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-full text-xs font-medium">
@@ -298,18 +298,28 @@ const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
                                     <Heart className={`w-5 h-5 transition-colors ${offer.is_favorite ? 'fill-rose-500 text-rose-500' : 'text-slate-400 group-hover/fav:text-rose-400'}`} />
                                 </button>
                                 <div className="text-sm text-slate-500 mb-2 font-mono">{t('id')}: {offer.offer_id}</div>
-                                <h1 className="text-3xl font-extrabold text-white mb-4 leading-tight pr-12">{offer.title}</h1>
-
-                                <div className="text-4xl font-black text-emerald-400 mb-6 bg-emerald-500/10 inline-block px-4 py-2 rounded-xl border border-emerald-500/20">
-                                    {offer.price ? `${String(parseInt(offer.price, 10)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')} PLN` : t('askPrice')}
+                                <h1 className="text-xl sm:text-3xl font-extrabold text-white mb-4 leading-tight pr-12">{offer.title}</h1>
+                                <div className="flex items-center gap-3 mb-6 w-full">
+                                    <div className="flex-1 text-2xl sm:text-4xl font-black text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-500/20 text-center sm:text-left">
+                                        {offer.price ? `${String(parseInt(offer.price, 10)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')} PLN` : t('askPrice')}
+                                    </div>
+                                    <a
+                                        href={offer.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="shrink-0 p-3 sm:py-4 sm:px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-[0_10px_20px_rgba(37,99,235,0.3)] flex items-center justify-center gap-2 transform hover:-translate-y-1 active:scale-95"
+                                    >
+                                        <span className="hidden sm:inline text-base">{t('viewOriginal')}</span> 
+                                        <ExternalLink className="w-6 h-6 sm:w-5 sm:h-5" />
+                                    </a>
                                 </div>
 
                                 <div className="flex items-center gap-2 text-slate-400 mb-8 border-b border-slate-700 pb-6">
                                     <MapPin className="w-4 h-4 text-blue-400" />
-                                    <span className="font-medium text-slate-300">{offer.location || t('locationNotSpecified')}</span>
+                                    <span className="text-sm sm:text-base font-medium text-slate-300">{offer.location || t('locationNotSpecified')}</span>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3 mb-8">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
                                     {renderSpec(<Calendar className="w-4 h-4" />, "year", offer.year)}
                                     {renderSpec(<Gauge className="w-4 h-4" />, "mileage_label", offer.mileage ? `${offer.mileage}` : null)}
                                     {renderSpec(<Fuel className="w-4 h-4" />, "fuel", offer.fuel)}
@@ -318,7 +328,7 @@ const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
 
                                 <div className="space-y-2 mb-8">
                                     <h4 className="text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wider">{t('additionalDetails')}</h4>
-                                    <div className="grid grid-cols-1 gap-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {renderSpec(<Car className="w-4 h-4" />, "bodyType", offer.body)}
                                         {renderSpec(<Settings className="w-4 h-4" />, "transmission", offer.transmission)}
                                         {renderSpec(<Palette className="w-4 h-4" />, "color", offer.color)}
@@ -328,14 +338,6 @@ const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
                                     </div>
                                 </div>
 
-                                <a
-                                    href={offer.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold rounded-lg transition-all shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] flex items-center justify-center gap-2 transform hover:-translate-y-1"
-                                >
-                                    {t('viewOriginal')} <ExternalLink className="w-5 h-5" />
-                                </a>
                                 <div className="flex flex-col items-center gap-1 mt-4 text-xs text-slate-500">
                                     <span>{t('publishedDate')}: {offer.date}</span>
                                     <span>{t('dataScrapedOn')}: {offer.created_at ? offer.created_at.slice(0, 10).replace(/-/g, '.') + ' ' + offer.created_at.slice(11, 16) : '-'}</span>

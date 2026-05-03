@@ -53,7 +53,7 @@ const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode =
     };
 
     if (viewMode === 'list') {
-        return <ListCard offer={offer} onSelect={onSelect} isSeen={isSeen} isFavorite={offer.is_favorite} handleToggleFavorite={handleToggleFavorite} cardRef={cardRef} />;
+        return <ListCard offer={offer} onSelect={onSelect} t={t} showToast={showToast} isSeen={isSeen} isFavorite={offer.is_favorite} handleToggleFavorite={handleToggleFavorite} cardRef={cardRef} />;
     }
 
     return (
@@ -88,18 +88,16 @@ const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode =
                 </div>
 
                 <div className="p-5">
-                    <div className="flex justify-between items-start mb-4 gap-3">
-                        <div className="flex-1">
-                            <h2 className="text-lg font-bold text-white mb-1 line-clamp-2 group-hover:text-blue-400 transition-colors leading-tight">{offer.title || t('unknownTitle')}</h2>
-                            <p className="text-sm text-slate-400 flex items-center gap-1">
-                                <MapPin className="w-3 h-3" /> {offer.location || t('unknownLocation')}
-                            </p>
-                        </div>
-                        <div className="text-right shrink-0">
+                    <div className="mb-4">
+                        <h2 className="text-lg font-bold text-white mb-1 line-clamp-2 group-hover:text-blue-400 transition-colors leading-tight">{offer.title || t('unknownTitle')}</h2>
+                        <div className="flex flex-col gap-1">
                             <div className="text-2xl font-black text-emerald-400 whitespace-nowrap">
                                 {offer.price ? formatPrice(offer.price) : t('askPrice')}
                                 {offer.price && <span className="text-base text-emerald-500/80 ml-1">PLN</span>}
                             </div>
+                            <p className="text-xs text-slate-400 flex items-center gap-1">
+                                <MapPin className="w-3 h-3" /> {offer.location || t('unknownLocation')}
+                            </p>
                         </div>
                     </div>
 
@@ -149,7 +147,7 @@ const ListCard = ({ offer, onSelect, t, showToast, isSeen, isFavorite, handleTog
     <div ref={cardRef} onClick={() => onSelect(offer)} className="group relative cursor-pointer">
         <button
             onClick={handleToggleFavorite}
-            className="absolute top-1/2 -translate-y-1/2 right-4 z-20 p-2 bg-slate-900/60 hover:bg-slate-800/90 backdrop-blur rounded-full transition-all border border-slate-700 shadow-lg group/btn hover:scale-110"
+            className="absolute top-3 right-3 z-20 p-2 bg-slate-900/60 hover:bg-slate-800/90 backdrop-blur rounded-full transition-all border border-slate-700 shadow-lg group/btn hover:scale-110"
         >
             <Heart className={`w-4 h-4 transition-colors ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-slate-400 group-hover/btn:text-rose-400'}`} />
         </button>
@@ -161,34 +159,38 @@ const ListCard = ({ offer, onSelect, t, showToast, isSeen, isFavorite, handleTog
                 </span>
             </div>
         )}
-        <div className={`glass-panel overflow-hidden flex hover:border-blue-500/50 transition-all duration-200 hover:shadow-[0_4px_20px_-5px_rgba(59,130,246,0.3)] ${!isSeen ? 'border-emerald-500/30' : ''}`}>
-            <div className="w-64 shrink-0 h-48 relative bg-slate-800 flex items-center justify-center overflow-hidden">
-                <BlurImage img={offer.img} title={offer.title} className="relative w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-xl" />
-                {(!offer.img || offer.img === 'NULL') && <span className="text-slate-500 text-xs">No Image</span>}
+        <div className={`glass-panel overflow-hidden flex max-h-36 sm:max-h-52 hover:border-blue-500/50 transition-all duration-200 hover:shadow-[0_4px_20px_-5px_rgba(59,130,246,0.3)] ${!isSeen ? 'border-emerald-500/30' : ''}`}>
+            <div className="w-32 sm:w-64 shrink-0 self-stretch relative bg-slate-900/50 flex items-center justify-center overflow-hidden">
+                <BlurImage img={offer.img} title={offer.title} className="relative w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-2xl z-10" />
+                {(!offer.img || offer.img === 'NULL') && <span className="text-slate-500 text-[10px] sm:text-xs text-center px-2">{t('noImage')}</span>}
             </div>
-            <div className="flex-1 px-6 py-5 flex flex-col justify-between min-w-0">
+            <div className="flex-1 px-3 sm:px-6 py-2 sm:py-5 flex flex-col justify-between min-w-0">
                 <div>
                     <h2 className="text-sm font-bold text-white line-clamp-1 group-hover:text-blue-400 transition-colors">{offer.title || 'Unknown Title'}</h2>
-                    <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                        <MapPin className="w-3 h-3" /> {offer.location || 'Unknown Location'}
+                    {/* Price on mobile only */}
+                    <div className="sm:hidden text-emerald-400 font-black text-xs mt-0.5">
+                        {offer.price ? formatPrice(offer.price) : t('askPrice')}
+                        {offer.price && <span className="text-[10px] text-emerald-500/80 ml-0.5">PLN</span>}
+                    </div>
+                    <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 min-w-0">
+                        <MapPin className="w-3 h-3 shrink-0" /> <span className="truncate">{offer.location || 'Unknown Location'}</span>
                     </p>
                 </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs mt-2">
-                    {offer.year && <span className="text-slate-400">Year: <span className="font-semibold text-slate-200">{offer.year}</span></span>}
-                    {offer.mileage && <span className="text-slate-400">Mileage: <span className="font-semibold text-slate-200">{offer.mileage} km</span></span>}
-                    {offer.fuel && <span className="text-slate-400">Fuel: <span className="font-semibold text-slate-200">{offer.fuel}</span></span>}
-                    {offer.capacity && <span className="text-slate-400">Engine: <span className="font-semibold text-slate-200">{offer.capacity}</span></span>}
+                <div className="flex flex-wrap gap-x-2 sm:gap-x-4 gap-y-0.5 text-[10px] sm:text-xs mt-1 sm:mt-2">
+                    {offer.year && <span className="text-slate-400"><span className="hidden sm:inline">{t('year')}: </span><span className="font-semibold text-slate-200">{offer.year}</span></span>}
+                    {offer.mileage && <span className="text-slate-400"><span className="hidden sm:inline">{t('mileage_label')}: </span><span className="font-semibold text-slate-200">{offer.mileage}</span></span>}
+                    {offer.fuel && <span className="text-slate-400"><span className="hidden sm:inline">{t('fuel')}: </span><span className="font-semibold text-slate-200">{offer.fuel}</span></span>}
                 </div>
-                <div className="mt-auto pt-2 flex gap-4 text-[10px] text-slate-500">
+                <div className="mt-auto pt-2 flex flex-col gap-0.5 text-[10px] text-slate-500">
                     <span>{t('published')}: {offer.date}</span>
                     <span>{t('scraped')}: {offer.created_at ? offer.created_at.slice(0, 10).replace(/-/g, '.') + ' ' + offer.created_at.slice(11, 16) : '-'}</span>
                 </div>
             </div>
-            <div className="shrink-0 flex items-center pr-14 pl-4 border-l border-slate-700/50">
+            <div className="hidden sm:flex shrink-0 items-center pr-10 sm:pr-14 pl-2 sm:pl-4 border-l border-slate-700/50">
                 <div className="text-right">
-                    <div className="text-lg font-black text-emerald-400 whitespace-nowrap">
-                        {offer.price ? formatPrice(offer.price) : 'Ask'}
-                        {offer.price && <span className="text-xs text-emerald-500/80 ml-1">PLN</span>}
+                    <div className="text-sm sm:text-lg font-black text-emerald-400 whitespace-nowrap">
+                        {offer.price ? formatPrice(offer.price) : t('askPrice')}
+                        {offer.price && <span className="text-[10px] sm:text-xs text-emerald-500/80 ml-0.5 sm:ml-1">PLN</span>}
                     </div>
                 </div>
             </div>
@@ -321,6 +323,7 @@ function App() {
     const [selectedOffer, setSelectedOffer] = useState(null);
     const [showSaveModal, setShowSaveModal] = useState(false);
     const [showSavedDrawer, setShowSavedDrawer] = useState(false);
+    const [showFilters, setShowFilters] = useState(window.innerWidth >= 768);
     const [showLogsModal, setShowLogsModal] = useState(false);
     const [scraperLogs, setScraperLogs] = useState([]);
     const [toasts, setToasts] = useState([]);
@@ -376,6 +379,273 @@ function App() {
     const debouncedPriceMax = useDebounce(priceMax, 500);
     const debouncedMileageMin = useDebounce(mileageMin, 500);
     const debouncedMileageMax = useDebounce(mileageMax, 500);
+
+    const renderFilters = () => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
+            <div className="flex flex-wrap gap-3 sm:col-span-full pb-4 border-b border-slate-700/50 mb-2">
+                <button
+                    onClick={() => setOnlyNew(!onlyNew)}
+                    className={`px-3 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${onlyNew
+                        ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-[0_0_20px_-5px_rgba(16,185,129,0.3)]'
+                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
+                        }`}
+                >
+                    <div className={`w-1.5 h-1.5 rounded-full ${onlyNew ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`}></div>
+                    {t('onlyNew')}
+                </button>
+
+                <button
+                    onClick={() => setOnlyWithPrice(!onlyWithPrice)}
+                    className={`px-3 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${onlyWithPrice
+                        ? 'bg-amber-500/10 border-amber-500 text-amber-400 shadow-[0_0_20px_-5px_rgba(245,158,11,0.3)]'
+                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
+                        }`}
+                >
+                    <div className={`w-1.5 h-1.5 rounded-full ${onlyWithPrice ? 'bg-amber-400' : 'bg-slate-600'}`}></div>
+                    {t('hideWithoutPrice')}
+                </button>
+
+                <button
+                    onClick={() => setExcludeBullshit(!excludeBullshit)}
+                    className={`px-3 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${excludeBullshit
+                        ? 'bg-orange-500/10 border-orange-500 text-orange-400 shadow-[0_0_20px_-5px_rgba(249,115,22,0.3)]'
+                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
+                        }`}
+                >
+                    <div className={`w-1.5 h-1.5 rounded-full ${excludeBullshit ? 'bg-orange-400' : 'bg-slate-600'}`}></div>
+                    {t('hideBullshit')}
+                </button>
+
+                <button
+                    onClick={() => setShowArchived(!showArchived)}
+                    className={`px-3 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${showArchived
+                        ? 'bg-violet-500/10 border-violet-500 text-violet-400 shadow-[0_0_20px_-5px_rgba(139,92,246,0.3)]'
+                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
+                        }`}
+                >
+                    <div className={`w-1.5 h-1.5 rounded-full ${showArchived ? 'bg-violet-400' : 'bg-slate-600'}`}></div>
+                    {t('showArchived')}
+                </button>
+            </div>
+
+            <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">{t('search')}</label>
+                <input
+                    type="text"
+                    placeholder={t('keywords')}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                />
+            </div>
+
+            <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">{t('sortBy')}</label>
+                <select
+                    value={ordering}
+                    onChange={(e) => setOrdering(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                >
+                    <option value="-created_at">{t('newestAdded')}</option>
+                    <option value="created_at">{t('oldestAdded')}</option>
+                    <option value="-date">{t('publishedNewest')}</option>
+                    <option value="date">{t('publishedOldest')}</option>
+                    <option value="-year_num">{t('newestProduction')}</option>
+                    <option value="year_num">{t('oldestProduction')}</option>
+                    <option value="price_num">{t('priceLowHigh')}</option>
+                    <option value="-price_num">{t('priceHighLow')}</option>
+                    <option value="mileage_num">{t('mileageLowHigh')}</option>
+                </select>
+            </div>
+
+            <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">{t('brand')}</label>
+                <input
+                    type="text"
+                    placeholder="e.g. Audi, BMW"
+                    value={brandFilter}
+                    onChange={(e) => setBrandFilter(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                />
+            </div>
+
+            <div className="sm:col-span-2 lg:col-span-1 lg:col-start-4 lg:row-span-2 self-start">
+                <label className="block text-xs font-medium text-slate-400 mb-2">{t('fuelType')}</label>
+                <div className="flex flex-wrap gap-2">
+                    {[
+                        { id: 'Benzyna', label: 'Benzyna' },
+                        { id: 'Olej Napędowy', label: lang === 'pl' ? 'Diesel' : 'Diesel' },
+                        { id: 'Autogaz', label: lang === 'pl' ? 'LPG' : 'LPG' },
+                        { id: 'Hybryda', label: 'Hybryda' },
+                        { id: 'Elektryczny', label: lang === 'pl' ? 'Elektryczny' : 'Electric' },
+                        { id: 'Alternatywne', label: 'Alternatywne' }
+                    ].map(f => {
+                        const isActive = fuelFilter.includes(f.id);
+                        return (
+                            <button
+                                key={f.id}
+                                onClick={() => {
+                                    setPage(1);
+                                    setFuelFilter(prev => 
+                                        prev.includes(f.id) 
+                                        ? prev.filter(x => x !== f.id) 
+                                        : [...prev, f.id]
+                                    );
+                                }}
+                                className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-tight transition-all ${
+                                    isActive
+                                    ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_10px_rgba(37,99,235,0.3)]'
+                                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
+                                }`}
+                            >
+                                {f.label}
+                            </button>
+                        );
+                    })}
+                    {fuelFilter.length > 0 && (
+                        <button 
+                            onClick={() => { setPage(1); setFuelFilter([]); }}
+                            className="px-2 py-1.5 text-[10px] font-bold text-rose-400 hover:text-rose-300 underline underline-offset-4"
+                        >
+                            {lang === 'pl' ? 'Wyczyść' : 'Clear'}
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">{t('price')}</label>
+                <div className="flex gap-2">
+                    <input
+                        type="number"
+                        placeholder={lang === 'pl' ? 'Od' : 'From'}
+                        value={priceMin}
+                        onChange={(e) => setPage(1) || setPriceMin(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                    />
+                    <input
+                        type="number"
+                        placeholder={lang === 'pl' ? 'Do' : 'To'}
+                        value={priceMax}
+                        onChange={(e) => setPage(1) || setPriceMax(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">{t('mileage')}</label>
+                <div className="flex gap-2">
+                    <input
+                        type="number"
+                        placeholder={lang === 'pl' ? 'Od' : 'From'}
+                        value={mileageMin}
+                        onChange={(e) => setPage(1) || setMileageMin(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                    />
+                    <input
+                        type="number"
+                        placeholder={lang === 'pl' ? 'Do' : 'To'}
+                        value={mileageMax}
+                        onChange={(e) => setPage(1) || setMileageMax(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <label className="block text-xs font-medium text-slate-400 mb-1">{t('productionYear')}</label>
+                <div className="flex gap-2">
+                    <input
+                        type="number"
+                        placeholder={lang === 'pl' ? 'Od' : 'From'}
+                        value={yearMin}
+                        onChange={(e) => setPage(1) || setYearMin(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                    />
+                    <input
+                        type="number"
+                        placeholder={lang === 'pl' ? 'Do' : 'To'}
+                        value={yearMax}
+                        onChange={(e) => setPage(1) || setYearMax(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                    />
+                </div>
+            </div>
+
+            {/* Published Date Range + Quick Presets — full width */}
+            <div className="sm:col-span-full pt-2 border-t border-slate-700/50 mt-2">
+                <div className="flex flex-row flex-wrap gap-3 items-end">
+                    <div className="flex-1">
+                        <label className="block text-xs font-medium text-slate-400 mb-1">{t('publishedFrom')}</label>
+                        <input
+                            type="date"
+                            value={publishedAfter.replace(/\./g, '-')}
+                            onChange={(e) => setPublishedAfter(e.target.value.replace(/-/g, '.'))}
+                            className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all [color-scheme:dark]"
+                        />
+                    </div>
+                    <div className="flex-1">
+                        <label className="block text-xs font-medium text-slate-400 mb-1">{t('publishedTo')}</label>
+                        <input
+                            type="date"
+                            value={publishedBefore.replace(/\./g, '-')}
+                            onChange={(e) => setPublishedBefore(e.target.value.replace(/-/g, '.'))}
+                            className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all [color-scheme:dark]"
+                        />
+                    </div>
+                    <div className="flex gap-1.5 flex-wrap shrink-0 pb-0.5">
+                        <span className="text-xs text-slate-500 w-full sm:w-auto self-center whitespace-nowrap">{t('within')}:</span>
+                        {DATE_PRESETS.map(({ label, days }) => {
+                            const val = getPublishedAfterDate(days);
+                            const isActive = publishedAfter === val && !publishedBefore;
+                            return (
+                                <button
+                                    key={label}
+                                    onClick={() => {
+                                        if (isActive) {
+                                            setPublishedAfter('');
+                                        } else {
+                                            setPublishedAfter(val);
+                                            setPublishedBefore('');
+                                        }
+                                    }}
+                                    className={`px-2.5 py-1.5 rounded-md text-xs font-semibold border transition-all ${isActive
+                                        ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.4)]'
+                                        : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-blue-500 hover:text-white'
+                                        }`}
+                                >
+                                    {label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+
+            {/* Bottom Buttons — 50/50 full width */}
+            <div className="sm:col-span-full grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+                <button
+                    onClick={clearFilters}
+                    className="py-2.5 bg-slate-700 hover:bg-slate-600 text-sm font-medium rounded-lg transition-colors cursor-pointer border border-slate-600"
+                >
+                    {t('clearFilters')}
+                </button>
+                <button
+                    onClick={saveAsDefault}
+                    className="py-2.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 text-sm font-bold rounded-lg transition-colors cursor-pointer flex justify-center items-center gap-2"
+                >
+                    <Save className="w-4 h-4" /> {t('saveAsDefault')}
+                </button>
+                <button
+                    onClick={() => setShowSaveModal(true)}
+                    className="py-2.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 text-sm font-bold rounded-lg transition-colors cursor-pointer flex justify-center items-center gap-2"
+                >
+                    <Bookmark className="w-4 h-4" /> {t('saveSearch')}
+                </button>
+            </div>
+        </div>
+    );
 
     const fetchOffers = async (append = false) => {
         setLoading(true);
@@ -813,11 +1083,11 @@ function App() {
                     onToggleFavorite={toggleFavorite}
                 />
             )}
-            <div className="min-h-screen p-6 custom-scrollbar">
-                <header className="mb-8 flex justify-between items-end border-b border-slate-700 pb-4">
+            <div className="min-h-screen p-4 md:p-6 custom-scrollbar">
+                <header className="mb-4 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-700 pb-6 gap-6">
                     <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-4">
-                            <h1 className="text-4xl font-extrabold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                        <div className="flex items-center justify-between md:justify-start gap-4 w-full md:w-auto">
+                            <h1 className="text-2xl sm:text-4xl font-extrabold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
                                 {t('title')}
                             </h1>
                             <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700 scale-90">
@@ -835,10 +1105,10 @@ function App() {
                                 </button>
                             </div>
                         </div>
-                        <p className="text-slate-400 text-sm flex items-center">
+                        <p className="text-slate-400 text-sm flex flex-wrap items-center gap-y-2">
                             {t('subtitle')}
                             {scraperStatus && (
-                                <span className="flex items-center gap-1.5 ml-3 pl-3 border-l border-slate-700">
+                                <span className="flex flex-wrap items-center gap-1.5 md:ml-3 md:pl-3 md:border-l border-slate-700">
                                     <span className={`w-1.5 h-1.5 rounded-full ${(scraperStatus.is_running || isTriggering) ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-slate-500'}`}></span>
                                     <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
                                         {(scraperStatus.is_running || isTriggering) ? (
@@ -868,10 +1138,21 @@ function App() {
                             )}
                         </p>
                     </div>
-                    <div className="text-slate-300 text-sm flex items-center gap-3">
+                    <div className="text-slate-300 text-sm flex flex-wrap items-center gap-3 w-full md:w-auto">
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border transition-all w-full md:w-auto ${showFilters
+                                ? 'bg-blue-600/20 border-blue-500/50 text-blue-400 shadow-[0_0_15px_-3px_rgba(37,99,235,0.4)]'
+                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
+                                }`}
+                        >
+                            <Filter className={`w-4 h-4 transition-transform duration-300 ${showFilters ? 'rotate-180 scale-110' : ''}`} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">{t('filters')}</span>
+                        </button>
+
                         <button
                             onClick={() => setOnlyFavorites(!onlyFavorites)}
-                            className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all group overflow-hidden ${onlyFavorites
+                            className={`relative flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border transition-all group overflow-hidden w-full md:w-auto ${onlyFavorites
                                 ? 'bg-rose-500/10 border-rose-500/50 text-rose-400 shadow-[0_0_20px_-5px_rgba(244,63,94,0.3)]'
                                 : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:border-slate-600'
                                 }`}
@@ -883,7 +1164,7 @@ function App() {
 
                         <button
                             onClick={() => setShowSavedDrawer(true)}
-                            className="relative flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition-all group"
+                            className="relative flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition-all group w-full md:w-auto"
                         >
                             <Bookmark className={`w-4 h-4 transition-colors ${savedSearches.some(ss => ss.new_count > 0) ? 'text-emerald-400' : 'text-slate-400 group-hover:text-emerald-400'}`} />
                             <span className="text-[10px] font-black uppercase tracking-widest">{t('savedSearches')}</span>
@@ -899,282 +1180,38 @@ function App() {
                     </div>
                 </header>
 
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4 md:gap-6">
                     <div className="w-full">
-                        {/* Filters Panel */}
-                        {!onlyFavorites && (
-                            <div className="glass-panel p-5 w-full animate-in fade-in slide-in-from-top-2 duration-300">
+                        {/* Desktop Filters Panel (Inline) */}
+                        {!onlyFavorites && showFilters && (
+                            <div className="hidden md:block glass-panel p-5 w-full mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                                         <Filter className="w-5 h-5" /> {t('filters')}
                                     </h3>
                                 </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
-                                    <div className="flex flex-wrap gap-3 sm:col-span-full pb-4 border-b border-slate-700/50 mb-2">
-                                        <button
-                                            onClick={() => setOnlyNew(!onlyNew)}
-                                            className={`px-3 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${onlyNew
-                                                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-[0_0_20px_-5px_rgba(16,185,129,0.3)]'
-                                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
-                                                }`}
-                                        >
-                                            <div className={`w-1.5 h-1.5 rounded-full ${onlyNew ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`}></div>
-                                            {t('onlyNew')}
-                                        </button>
-
-                                        <button
-                                            onClick={() => setOnlyWithPrice(!onlyWithPrice)}
-                                            className={`px-3 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${onlyWithPrice
-                                                ? 'bg-amber-500/10 border-amber-500 text-amber-400 shadow-[0_0_20px_-5px_rgba(245,158,11,0.3)]'
-                                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
-                                                }`}
-                                        >
-                                            <div className={`w-1.5 h-1.5 rounded-full ${onlyWithPrice ? 'bg-amber-400' : 'bg-slate-600'}`}></div>
-                                            {t('hideWithoutPrice')}
-                                        </button>
-
-                                        <button
-                                            onClick={() => setExcludeBullshit(!excludeBullshit)}
-                                            className={`px-3 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${excludeBullshit
-                                                ? 'bg-orange-500/10 border-orange-500 text-orange-400 shadow-[0_0_20px_-5px_rgba(249,115,22,0.3)]'
-                                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
-                                                }`}
-                                        >
-                                            <div className={`w-1.5 h-1.5 rounded-full ${excludeBullshit ? 'bg-orange-400' : 'bg-slate-600'}`}></div>
-                                            {t('hideBullshit')}
-                                        </button>
-
-                                        <button
-                                            onClick={() => setShowArchived(!showArchived)}
-                                            className={`px-3 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${showArchived
-                                                ? 'bg-violet-500/10 border-violet-500 text-violet-400 shadow-[0_0_20px_-5px_rgba(139,92,246,0.3)]'
-                                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
-                                                }`}
-                                        >
-                                            <div className={`w-1.5 h-1.5 rounded-full ${showArchived ? 'bg-violet-400' : 'bg-slate-600'}`}></div>
-                                            {t('showArchived')}
-                                        </button>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">{t('search')}</label>
-                                        <input
-                                            type="text"
-                                            placeholder={t('keywords')}
-                                            value={search}
-                                            onChange={(e) => setSearch(e.target.value)}
-                                            className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">{t('sortBy')}</label>
-                                        <select
-                                            value={ordering}
-                                            onChange={(e) => setOrdering(e.target.value)}
-                                            className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
-                                        >
-                                            <option value="-created_at">{t('newestAdded')}</option>
-                                            <option value="created_at">{t('oldestAdded')}</option>
-                                            <option value="-date">{t('publishedNewest')}</option>
-                                            <option value="date">{t('publishedOldest')}</option>
-                                            <option value="-year_num">{t('newestProduction')}</option>
-                                            <option value="year_num">{t('oldestProduction')}</option>
-                                            <option value="price_num">{t('priceLowHigh')}</option>
-                                            <option value="-price_num">{t('priceHighLow')}</option>
-                                            <option value="mileage_num">{t('mileageLowHigh')}</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">{t('brand')}</label>
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. Audi, BMW"
-                                            value={brandFilter}
-                                            onChange={(e) => setBrandFilter(e.target.value)}
-                                            className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
-                                        />
-                                    </div>
-
-                                    <div className="sm:col-span-2 lg:col-span-1 lg:col-start-4 lg:row-span-2 self-start">
-                                        <label className="block text-xs font-medium text-slate-400 mb-2">{t('fuelType')}</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {[
-                                                { id: 'Benzyna', label: 'Benzyna' },
-                                                { id: 'Olej Napędowy', label: lang === 'pl' ? 'Diesel' : 'Diesel' },
-                                                { id: 'Autogaz', label: lang === 'pl' ? 'LPG' : 'LPG' },
-                                                { id: 'Hybryda', label: 'Hybryda' },
-                                                { id: 'Elektryczny', label: lang === 'pl' ? 'Elektryczny' : 'Electric' },
-                                                { id: 'Alternatywne', label: 'Alternatywne' }
-                                            ].map(f => {
-                                                const isActive = fuelFilter.includes(f.id);
-                                                return (
-                                                    <button
-                                                        key={f.id}
-                                                        onClick={() => {
-                                                            setPage(1);
-                                                            setFuelFilter(prev => 
-                                                                prev.includes(f.id) 
-                                                                ? prev.filter(x => x !== f.id) 
-                                                                : [...prev, f.id]
-                                                            );
-                                                        }}
-                                                        className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-tight transition-all ${
-                                                            isActive
-                                                            ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_10px_rgba(37,99,235,0.3)]'
-                                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
-                                                        }`}
-                                                    >
-                                                        {f.label}
-                                                    </button>
-                                                );
-                                            })}
-                                            {fuelFilter.length > 0 && (
-                                                <button 
-                                                    onClick={() => { setPage(1); setFuelFilter([]); }}
-                                                    className="px-2 py-1.5 text-[10px] font-bold text-rose-400 hover:text-rose-300 underline underline-offset-4"
-                                                >
-                                                    {lang === 'pl' ? 'Wyczyść' : 'Clear'}
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">{t('price')}</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="number"
-                                                placeholder={lang === 'pl' ? 'Od' : 'From'}
-                                                value={priceMin}
-                                                onChange={(e) => setPage(1) || setPriceMin(e.target.value)}
-                                                className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder={lang === 'pl' ? 'Do' : 'To'}
-                                                value={priceMax}
-                                                onChange={(e) => setPage(1) || setPriceMax(e.target.value)}
-                                                className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">{t('mileage')}</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="number"
-                                                placeholder={lang === 'pl' ? 'Od' : 'From'}
-                                                value={mileageMin}
-                                                onChange={(e) => setPage(1) || setMileageMin(e.target.value)}
-                                                className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder={lang === 'pl' ? 'Do' : 'To'}
-                                                value={mileageMax}
-                                                onChange={(e) => setPage(1) || setMileageMax(e.target.value)}
-                                                className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1">{t('productionYear')}</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="number"
-                                                placeholder={lang === 'pl' ? 'Od' : 'From'}
-                                                value={yearMin}
-                                                onChange={(e) => setPage(1) || setYearMin(e.target.value)}
-                                                className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
-                                            />
-                                            <input
-                                                type="number"
-                                                placeholder={lang === 'pl' ? 'Do' : 'To'}
-                                                value={yearMax}
-                                                onChange={(e) => setPage(1) || setYearMax(e.target.value)}
-                                                className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Published Date Range + Quick Presets — full width */}
-                                    <div className="sm:col-span-full pt-2 border-t border-slate-700/50 mt-2">
-                                        <div className="flex flex-col sm:flex-row gap-3 items-end">
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-medium text-slate-400 mb-1">{t('publishedFrom')}</label>
-                                                <input
-                                                    type="date"
-                                                    value={publishedAfter.replace(/\./g, '-')}
-                                                    onChange={(e) => setPublishedAfter(e.target.value.replace(/-/g, '.'))}
-                                                    className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all [color-scheme:dark]"
-                                                />
-                                            </div>
-                                            <div className="flex-1">
-                                                <label className="block text-xs font-medium text-slate-400 mb-1">{t('publishedTo')}</label>
-                                                <input
-                                                    type="date"
-                                                    value={publishedBefore.replace(/\./g, '-')}
-                                                    onChange={(e) => setPublishedBefore(e.target.value.replace(/-/g, '.'))}
-                                                    className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all [color-scheme:dark]"
-                                                />
-                                            </div>
-                                            <div className="flex gap-1.5 flex-wrap shrink-0 pb-0.5">
-                                                <span className="text-xs text-slate-500 w-full sm:w-auto self-center whitespace-nowrap">{t('within')}:</span>
-                                                {DATE_PRESETS.map(({ label, days }) => {
-                                                    const val = getPublishedAfterDate(days);
-                                                    const isActive = publishedAfter === val && !publishedBefore;
-                                                    return (
-                                                        <button
-                                                            key={label}
-                                                            onClick={() => {
-                                                                if (isActive) {
-                                                                    setPublishedAfter('');
-                                                                } else {
-                                                                    setPublishedAfter(val);
-                                                                    setPublishedBefore('');
-                                                                }
-                                                            }}
-                                                            className={`px-2.5 py-1.5 rounded-md text-xs font-semibold border transition-all ${isActive
-                                                                ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.4)]'
-                                                                : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-blue-500 hover:text-white'
-                                                                }`}
-                                                        >
-                                                            {label}
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Bottom Buttons — 50/50 full width */}
-                                    <div className="sm:col-span-full grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
-                                        <button
-                                            onClick={clearFilters}
-                                            className="py-2.5 bg-slate-700 hover:bg-slate-600 text-sm font-medium rounded-lg transition-colors cursor-pointer border border-slate-600"
-                                        >
-                                            {t('clearFilters')}
-                                        </button>
-                                        <button
-                                            onClick={saveAsDefault}
-                                            className="py-2.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 text-sm font-bold rounded-lg transition-colors cursor-pointer flex justify-center items-center gap-2"
-                                        >
-                                            <Save className="w-4 h-4" /> {t('saveAsDefault')}
-                                        </button>
-                                        <button
-                                            onClick={() => setShowSaveModal(true)}
-                                            className="py-2.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 text-sm font-bold rounded-lg transition-colors cursor-pointer flex justify-center items-center gap-2"
-                                        >
-                                            <Bookmark className="w-4 h-4" /> {t('saveSearch')}
-                                        </button>
-                                    </div>
-                                </div>
+                                {renderFilters()}
                             </div>
+                        )}
+
+                        {/* Mobile Filters Drawer */}
+                        <div className={`fixed inset-y-0 left-0 z-[130] w-full sm:w-80 bg-slate-900 border-r border-slate-800 shadow-[20px_0_50px_rgba(0,0,0,0.5)] transform transition-transform duration-300 ease-in-out md:hidden ${showFilters && !onlyFavorites ? 'translate-x-0' : '-translate-x-full'}`}>
+                            <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/90 backdrop-blur-sm sticky top-0 z-10">
+                                <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                                    <Filter className="text-blue-400 w-5 h-5" /> {t('filters')}
+                                </h3>
+                                <button onClick={() => setShowFilters(false)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <div className="p-6 overflow-y-auto h-[calc(100%-80px)] custom-scrollbar">
+                                {renderFilters()}
+                            </div>
+                        </div>
+
+                        {/* Mobile Drawer Backdrop */}
+                        {showFilters && !onlyFavorites && (
+                            <div className="fixed inset-0 z-[125] bg-slate-950/60 backdrop-blur-md md:hidden animate-in fade-in duration-300" onClick={() => setShowFilters(false)}></div>
                         )}
                     </div>
 
