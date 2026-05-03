@@ -271,8 +271,10 @@ def run_maintenance():
         except Exception as e:
             log(f"Error checking {offer.offer_id}: {e}")
             
-        # polite delay
-        time.sleep(0.3)
+        # Randomized user-like delays
+        time.sleep(random.uniform(0.5, 1.5))
+        if i % 15 == 0:
+            time.sleep(random.uniform(2.0, 5.0)) # Occasional longer pause
         
     log(f"Maintenance complete. Total archived: {archived_count}")
 
@@ -282,15 +284,21 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         log("Scraper started...")
         while True:
-            now = timezone.now()
+            now = timezone.localtime()
             status, _ = ScraperStatus.objects.get_or_create(id=1)
             
-            # NIGHT MAINTENANCE CHECK (between 2 AM and 4 AM)
-            # Run once per day in this window
+            # WEEKLY MAINTENANCE CHECK (between 2 AM and 4 AM)
+            # Run once per week in this window
             is_night_window = 2 <= now.hour <= 4
-            already_run_today = status.last_maintenance_run and status.last_maintenance_run.date() == now.date()
             
-            if is_night_window and not already_run_today:
+            needs_maintenance = True
+            if status.last_maintenance_run:
+                # Check if it's been at least 7 days since the last run
+                days_since_last = (now - timezone.localtime(status.last_maintenance_run)).days
+                if days_since_last < 7:
+                    needs_maintenance = False
+            
+            if is_night_window and needs_maintenance:
                 log(f"Maintenance window reached ({now.hour}:00). Starting maintenance...")
                 status.is_running = True
                 status.save()
@@ -303,13 +311,20 @@ class Command(BaseCommand):
                 status.save()
                 log("Maintenance session finished.")
 
-            log("Starting a new scraping cycle...")
-            status.is_running = True
-            status.force_scrape = False  # Reset flag when starting
-            status.last_run = timezone.now()
-            status.save()
+            # SCRAPING WINDOW CHECK (6 AM - 10 PM)
+            is_scraping_window = 6 <= now.hour < 22
             
-            run_scraper()
+            if is_scraping_window or status.force_scrape:
+                log("Starting a new scraping cycle...")
+                status.is_running = True
+                status.force_scrape = False  # Reset flag when starting
+                status.last_run = timezone.now()
+                status.save()
+                
+                run_scraper()
+            else:
+                log(f"Outside scraping window (6-22). Current local hour: {now.hour}. Skipping scraper run.")
+                # We don't reset force_scrape here, so it can still be used to bypass the window if needed
             
             # Calculate wait time
             base_wait = 3600
@@ -318,14 +333,30 @@ class Command(BaseCommand):
             wait_time = base_wait + (rand_direction * rand_wait)
             
             status.is_running = False
-            status.next_run = timezone.now() + timedelta(seconds=wait_time)
+            
+            # Calculate next run time
+            next_run_candidate = timezone.now() + timedelta(seconds=wait_time)
+            next_run_local = timezone.localtime(next_run_candidate)
+            
+            # If next run would fall outside 6-22, move it to 6 AM
+            if next_run_local.hour >= 22 or next_run_local.hour < 6:
+                if next_run_local.hour >= 22:
+                    target_local = (next_run_local + timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
+                else:
+                    target_local = next_run_local.replace(hour=6, minute=0, second=0, microsecond=0)
+                status.next_run = target_local
+            else:
+                status.next_run = next_run_candidate
+                
             status.save()
             
-            next_run_mins = wait_time / 60
-            log(f"Sleeping for {round(next_run_mins, 2)} minutes until next run...")
+            # Calculate how long to actually sleep in this loop iteration
+            # We cap it at 1 hour to ensure we don't miss the maintenance window or force_scrape checks
+            actual_wait_seconds = (status.next_run - timezone.now()).total_seconds()
+            sleep_time = max(min(actual_wait_seconds, 3600), 10) # At least 10 seconds, at most 1 hour
             
-            # Custom sleep loop to allow forcing a scrape
-            end_sleep = timezone.now() + timedelta(seconds=wait_time)
+            log(f"Sleeping for {round(sleep_time / 60, 2)} minutes...")
+            end_sleep = timezone.now() + timedelta(seconds=sleep_time)
             while timezone.now() < end_sleep:
                 # Check for forced scrape
                 status.refresh_from_db()

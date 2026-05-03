@@ -122,9 +122,14 @@ const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode =
                         </div>
                     </div>
 
-                    <div className="mt-4 pt-4 border-t border-slate-700/50 flex justify-between text-xs text-slate-500">
-                        <span>{t('published')}: {offer.date}</span>
-                        <span>{t('id')}: {offer.offer_id}</span>
+                    <div className="mt-4 pt-4 border-t border-slate-700/50 flex flex-col gap-1 text-[10px] text-slate-500">
+                        <div className="flex justify-between">
+                            <span>{t('published')}: {offer.date}</span>
+                            <span>{t('id')}: {offer.offer_id}</span>
+                        </div>
+                        <div className="flex justify-between border-t border-slate-800/30 pt-1">
+                            <span>{t('scraped')}: {offer.created_at ? offer.created_at.slice(0, 10).replace(/-/g, '.') + ' ' + offer.created_at.slice(11, 16) : '-'}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -173,6 +178,10 @@ const ListCard = ({ offer, onSelect, t, showToast, isSeen, isFavorite, handleTog
                     {offer.mileage && <span className="text-slate-400">Mileage: <span className="font-semibold text-slate-200">{offer.mileage} km</span></span>}
                     {offer.fuel && <span className="text-slate-400">Fuel: <span className="font-semibold text-slate-200">{offer.fuel}</span></span>}
                     {offer.capacity && <span className="text-slate-400">Engine: <span className="font-semibold text-slate-200">{offer.capacity}</span></span>}
+                </div>
+                <div className="mt-auto pt-2 flex gap-4 text-[10px] text-slate-500">
+                    <span>{t('published')}: {offer.date}</span>
+                    <span>{t('scraped')}: {offer.created_at ? offer.created_at.slice(0, 10).replace(/-/g, '.') + ' ' + offer.created_at.slice(11, 16) : '-'}</span>
                 </div>
             </div>
             <div className="shrink-0 flex items-center pr-14 pl-4 border-l border-slate-700/50">

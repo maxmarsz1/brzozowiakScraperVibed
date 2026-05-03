@@ -336,8 +336,9 @@ const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
                                 >
                                     {t('viewOriginal')} <ExternalLink className="w-5 h-5" />
                                 </a>
-                                <div className="text-center mt-4 text-xs text-slate-500">
-                                    {t('publishedDate')}: {offer.date}
+                                <div className="flex flex-col items-center gap-1 mt-4 text-xs text-slate-500">
+                                    <span>{t('publishedDate')}: {offer.date}</span>
+                                    <span>{t('dataScrapedOn')}: {offer.created_at ? offer.created_at.slice(0, 10).replace(/-/g, '.') + ' ' + offer.created_at.slice(11, 16) : '-'}</span>
                                 </div>
                             </div>
                     </div>
