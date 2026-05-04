@@ -191,7 +191,16 @@ brzozowiakApp/
 
 ## Configuration
 
-The project uses a `.env` file for configuration. Copy the settings and modify as needed.
+The project uses a `.env` file for configuration. You can use the provided example files as a starting point:
+- `.env.dev.example` — For local development (debug enabled, hot-reload)
+- `.env.prod.example` — For production (debug disabled, secure keys required)
+
+Copy one of these to `.env` and modify as needed:
+
+```bash
+cp .env.dev.example .env
+```
+
 
 ### Production Modes
 
@@ -210,9 +219,27 @@ You can choose how the frontend is served in production by setting `FRONTEND_MOD
 | `DJANGO_DEBUG` | `False` | Enable debug mode (set to `True` for development) |
 | `DJANGO_SECRET_KEY` | (required) | Django secret key for production |
 | `DJANGO_ALLOWED_HOSTS` | `localhost 127.0.0.1` | Allowed hosts for Django |
+| `TELEGRAM_BOT_TOKEN` | (optional) | Token from @BotFather |
+| `TELEGRAM_CHAT_ID` | (optional) | Your Telegram User ID or Group ID |
 | `BACKEND_PORT` | `8000` | Port for the Django backend |
 | `FRONTEND_PORT` | `3000` | Port for the Nginx frontend (Vite mode only) |
 | `VITE_API_URL` | `http://localhost:8000` | API URL for the frontend |
+| `BACKEND_COMMAND` | `gunicorn ...` | The shell command used to start the backend service. Useful for switching between `runserver` (dev) and `gunicorn` (prod). |
+
+
+
+### Telegram Notifications Setup
+
+To receive notifications about new offers:
+
+1.  **Create a Bot**: Message [@BotFather](https://t.me/botfather) on Telegram and follow the steps to create a new bot. Save the `API TOKEN`.
+2.  **Get Your Chat ID**: 
+    - Message your new bot.
+    - Use a bot like [@userinfobot](https://t.me/userinfobot) to get your numerical User ID.
+    - Alternatively, visit `https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates` after messaging the bot to find the `id` field in the JSON response.
+3.  **Update `.env`**: Add your token and chat ID to your `.env` file.
+4.  **Enable Notifications**: In the app, when creating or editing a **Saved Search**, check the **"Enable Telegram Notifications"** box.
+
 
 ---
 
@@ -220,8 +247,8 @@ You can choose how the frontend is served in production by setting `FRONTEND_MOD
 To run in development mode with hot-reloading:
 
 1.  **Configure `.env`**:
-    *   Set `DJANGO_DEBUG=True`.
-    *   Set `BACKEND_COMMAND="python manage.py runserver 0.0.0.0:8000"`.
+    *   Set `DJANGO_DEBUG="True"`.
+    *   Set `BACKEND_COMMAND="gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3 --reload"` (or use `python manage.py runserver 0.0.0.0:8000`).
 2.  **Start Services**:
     ```bash
     docker compose --profile dev up
