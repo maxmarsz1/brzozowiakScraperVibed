@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Filter, MapPin, Bookmark, Save, Trash2, Heart, Check, LayoutGrid, LayoutList, X, Bell, Info, ArrowUp, Send } from 'lucide-react';
+import { Filter, MapPin, Bookmark, Save, Trash2, Heart, Check, LayoutGrid, LayoutList, X, Bell, Info, ArrowUp, Send, Calendar, Archive } from 'lucide-react';
 import OfferDetails from './OfferDetails';
 import { translations } from './translations';
 import './index.css';
@@ -316,6 +316,117 @@ const LogsModal = ({ logs, onClose, t }) => {
     );
 };
 
+const MaintenanceModal = ({ status, onClose, t }) => {
+    if (!status) return null;
+
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date.toLocaleString([], {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    return (
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+                {/* Header */}
+                <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-3">
+                        <Info className="text-emerald-400 w-5 h-5" /> Scraper & Maintenance Info
+                    </h3>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+                
+                {/* Content */}
+                <div className="p-6 space-y-6 bg-slate-950/50 text-slate-300">
+                    {/* Run Schedule */}
+                    <div className="space-y-3">
+                        <h4 className="text-xs uppercase tracking-wider font-bold text-slate-500">Run Schedule</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="bg-slate-900/80 border border-slate-800 p-3.5 rounded-xl flex items-start gap-3">
+                                <Calendar className="text-blue-400 w-5 h-5 shrink-0 mt-0.5" />
+                                <div>
+                                    <div className="text-[10px] text-slate-500 uppercase font-black">Next Scraping Run</div>
+                                    <div className="text-sm font-bold text-white mt-1">
+                                        {formatDate(status.next_run)}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-slate-900/80 border border-slate-800 p-3.5 rounded-xl flex items-start gap-3">
+                                <Calendar className="text-emerald-400 w-5 h-5 shrink-0 mt-0.5" />
+                                <div>
+                                    <div className="text-[10px] text-slate-500 uppercase font-black">Next Maintenance Run</div>
+                                    <div className="text-sm font-bold text-white mt-1">
+                                        {formatDate(status.next_maintenance_run)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Archived Statistics */}
+                    <div className="space-y-3">
+                        <h4 className="text-xs uppercase tracking-wider font-bold text-slate-500">Archived Offers Stats</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-slate-900/80 border border-slate-800 p-3.5 rounded-xl text-center">
+                                <div className="text-[10px] text-slate-500 uppercase font-black">Archived Today (Regular Scans)</div>
+                                <div className="text-2xl font-black text-blue-400 mt-1">{status.archived_today_scan}</div>
+                            </div>
+                            <div className="bg-slate-900/80 border border-slate-800 p-3.5 rounded-xl text-center">
+                                <div className="text-[10px] text-slate-500 uppercase font-black">Archived Today (Maintenance)</div>
+                                <div className="text-2xl font-black text-emerald-400 mt-1">{status.archived_today_maintenance}</div>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl text-center">
+                                <div className="text-[9px] text-slate-500 uppercase font-black">Archived Yesterday</div>
+                                <div className="text-lg font-bold text-slate-300 mt-1">{status.archived_yesterday}</div>
+                            </div>
+                            <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl text-center">
+                                <div className="text-[9px] text-slate-500 uppercase font-black">Total Archived</div>
+                                <div className="text-lg font-bold text-purple-400 mt-1">{status.archived_total}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Previous Runs Info */}
+                    <div className="space-y-3">
+                        <h4 className="text-xs uppercase tracking-wider font-bold text-slate-500">Recent Executions</h4>
+                        <div className="bg-slate-900/80 border border-slate-800 rounded-xl divide-y divide-slate-800 overflow-hidden">
+                            <div className="p-3.5 flex justify-between items-center text-sm">
+                                <div className="flex items-center gap-2">
+                                    <Archive className="text-blue-400 w-4 h-4" />
+                                    <span>Last Scrape Archiving</span>
+                                </div>
+                                <span className="font-bold text-slate-200">{status.last_scan_archived_count || 0} offers</span>
+                            </div>
+                            <div className="p-3.5 flex justify-between items-center text-sm">
+                                <div className="flex items-center gap-2">
+                                    <Archive className="text-emerald-400 w-4 h-4" />
+                                    <span>Last Maintenance Archiving</span>
+                                </div>
+                                <span className="font-bold text-slate-200">{status.last_maintenance_archived_count || 0} offers</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Footer */}
+                <div className="p-4 border-t border-slate-800 flex justify-end bg-slate-900/30">
+                    <button onClick={onClose} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all border border-slate-700">Close</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 function App() {
     const [lang, setLang] = useState('pl');
     const t = (key) => translations[lang][key] || key;
@@ -325,6 +436,7 @@ function App() {
     const [showSavedDrawer, setShowSavedDrawer] = useState(false);
     const [showFilters, setShowFilters] = useState(window.innerWidth >= 768);
     const [showLogsModal, setShowLogsModal] = useState(false);
+    const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
     const [scraperLogs, setScraperLogs] = useState([]);
     const [toasts, setToasts] = useState([]);
 
@@ -580,7 +692,7 @@ function App() {
                         <label className="block text-xs font-medium text-slate-400 mb-1">{t('publishedFrom')}</label>
                         <input
                             type="date"
-                            value={publishedAfter.replace(/\./g, '-')}
+                            value={getResolvedDate(publishedAfter).replace(/\./g, '-')}
                             onChange={(e) => setPublishedAfter(e.target.value.replace(/-/g, '.'))}
                             className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all [color-scheme:dark]"
                         />
@@ -589,16 +701,16 @@ function App() {
                         <label className="block text-xs font-medium text-slate-400 mb-1">{t('publishedTo')}</label>
                         <input
                             type="date"
-                            value={publishedBefore.replace(/\./g, '-')}
+                            value={getResolvedDate(publishedBefore).replace(/\./g, '-')}
                             onChange={(e) => setPublishedBefore(e.target.value.replace(/-/g, '.'))}
                             className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all [color-scheme:dark]"
                         />
                     </div>
                     <div className="flex gap-1.5 flex-wrap shrink-0 pb-0.5">
                         <span className="text-xs text-slate-500 w-full sm:w-auto self-center whitespace-nowrap">{t('within')}:</span>
-                        {DATE_PRESETS.map(({ label, days }) => {
+                        {DATE_PRESETS.map(({ label, days, code }) => {
                             const val = getPublishedAfterDate(days);
-                            const isActive = publishedAfter === val && !publishedBefore;
+                            const isActive = (publishedAfter === code || publishedAfter === val) && !publishedBefore;
                             return (
                                 <button
                                     key={label}
@@ -606,7 +718,7 @@ function App() {
                                         if (isActive) {
                                             setPublishedAfter('');
                                         } else {
-                                            setPublishedAfter(val);
+                                            setPublishedAfter(code);
                                             setPublishedBefore('');
                                         }
                                     }}
@@ -858,6 +970,19 @@ function App() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    useEffect(() => {
+        const handlePopState = (event) => {
+            setSelectedOffer(prev => {
+                if (prev) {
+                    return null;
+                }
+                return prev;
+            });
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
+
     const scrollToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -891,14 +1016,23 @@ function App() {
     };
 
     const DATE_PRESETS = [
-        { label: '1D', days: 1 },
-        { label: '1W', days: 7 },
-        { label: '2W', days: 14 },
-        { label: '3W', days: 21 },
-        { label: '1M', days: 30 },
-        { label: '2M', days: 60 },
-        { label: '3M', days: 90 },
+        { label: '1D', days: 1, code: '1d' },
+        { label: '1W', days: 7, code: '7d' },
+        { label: '2W', days: 14, code: '14d' },
+        { label: '3W', days: 21, code: '21d' },
+        { label: '1M', days: 30, code: '30d' },
+        { label: '2M', days: 60, code: '60d' },
+        { label: '3M', days: 90, code: '90d' },
     ];
+
+    const getResolvedDate = (val) => {
+        if (!val) return "";
+        const preset = DATE_PRESETS.find(p => p.code === val.toLowerCase());
+        if (preset) {
+            return getPublishedAfterDate(preset.days);
+        }
+        return val;
+    };
 
     const saveCurrentSearch = async (name, telegramNotifications = false) => {
         if (telegramNotifications && (!scraperStatus || !scraperStatus.telegram_configured)) {
@@ -1057,10 +1191,15 @@ function App() {
 
     const handleSelectOffer = (offer) => {
         setSelectedOffer(offer);
+        window.history.pushState({ modal: 'offer' }, '');
     };
 
     const handleBack = () => {
-        setSelectedOffer(null);
+        if (window.history.state && window.history.state.modal === 'offer') {
+            window.history.back();
+        } else {
+            setSelectedOffer(null);
+        }
     };
 
     const handlePageChange = (newPage) => {
@@ -1132,6 +1271,12 @@ function App() {
                                                     className="ml-2 text-[10px] text-slate-400 hover:text-slate-300 underline font-medium cursor-pointer"
                                                 >
                                                     {t('logs') || 'Logs'}
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowMaintenanceModal(true)}
+                                                    className="ml-2 text-[10px] text-emerald-400 hover:text-emerald-300 underline font-medium cursor-pointer"
+                                                >
+                                                    {t('maintenance') || 'Maintenance'}
                                                 </button>
                                             </span>
                                         )}
@@ -1338,6 +1483,13 @@ function App() {
                 <LogsModal
                     logs={scraperLogs}
                     onClose={() => setShowLogsModal(false)}
+                    t={t}
+                />
+            )}
+            {showMaintenanceModal && (
+                <MaintenanceModal
+                    status={scraperStatus}
+                    onClose={() => setShowMaintenanceModal(false)}
                     t={t}
                 />
             )}

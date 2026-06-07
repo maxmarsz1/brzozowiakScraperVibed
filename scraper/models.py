@@ -37,6 +37,7 @@ class Offer(models.Model):
     is_seen = models.BooleanField(default=False, null=True)
     is_favorite = models.BooleanField(default=False, null=True)
     is_archived = models.BooleanField(default=False, null=True)
+    archived_by = models.CharField(max_length=50, default='scan', null=True, blank=True)
 
     def __str__(self):
         return f"{self.title} - {self.offer_id}"
@@ -56,6 +57,8 @@ class ScraperStatus(models.Model):
     last_maintenance_run = models.DateTimeField(null=True, blank=True)
     is_running = models.BooleanField(default=False)
     force_scrape = models.BooleanField(default=False)
+    last_maintenance_archived_count = models.IntegerField(default=0, null=True, blank=True)
+    last_scan_archived_count = models.IntegerField(default=0, null=True, blank=True)
 
     def __str__(self):
         return f"Scraper Status: {self.next_run}"

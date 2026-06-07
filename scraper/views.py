@@ -28,6 +28,29 @@ class OfferFilter(filters.FilterSet):
     published_after = filters.CharFilter(method='filter_published_after')
     published_before = filters.CharFilter(method='filter_published_before')
 
+    def resolve_relative_date(self, value):
+        import re
+        from datetime import timedelta
+        from django.utils import timezone
+        
+        match = re.match(r'^(\d+)([dwm])$', value.lower())
+        if match:
+            num = int(match.group(1))
+            unit = match.group(2)
+            if unit == 'd':
+                delta = timedelta(days=num)
+            elif unit == 'w':
+                delta = timedelta(weeks=num)
+            elif unit == 'm':
+                delta = timedelta(days=num * 30)
+            else:
+                delta = timedelta(0)
+            
+            current_date = timezone.localtime(timezone.now()).date()
+            resolved_date = current_date - delta
+            return resolved_date.strftime('%Y.%m.%d')
+        return value
+
     def filter_has_price(self, queryset, name, value):
         if value:
             return queryset.exclude(price__isnull=True).exclude(price='').exclude(price='NULL')
@@ -35,10 +58,12 @@ class OfferFilter(filters.FilterSet):
 
     def filter_published_after(self, queryset, name, value):
         # date field is stored as YYYY.MM.DD — string comparison is lexicographically sortable
-        return queryset.exclude(date__isnull=True).exclude(date='').filter(date__gte=value)
+        target_date = self.resolve_relative_date(value)
+        return queryset.exclude(date__isnull=True).exclude(date='').filter(date__gte=target_date)
 
     def filter_published_before(self, queryset, name, value):
-        return queryset.exclude(date__isnull=True).exclude(date='').filter(date__lte=value)
+        target_date = self.resolve_relative_date(value)
+        return queryset.exclude(date__isnull=True).exclude(date='').filter(date__lte=target_date)
 
     class Meta:
         model = Offer
