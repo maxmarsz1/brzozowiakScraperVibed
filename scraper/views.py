@@ -16,7 +16,7 @@ class CharInFilter(filters.BaseInFilter, filters.CharFilter):
     pass
 
 class OfferFilter(filters.FilterSet):
-    fuel = CharInFilter(field_name='fuel', lookup_expr='in')
+    fuel = filters.CharFilter(method='filter_fuel')
     year_min = filters.NumberFilter(field_name='year_num', lookup_expr='gte')
     year_max = filters.NumberFilter(field_name='year_num', lookup_expr='lte')
     price_min = filters.NumberFilter(field_name='price_num', lookup_expr='gte')
@@ -54,6 +54,18 @@ class OfferFilter(filters.FilterSet):
             resolved_date = current_date - delta
             return resolved_date.strftime('%Y.%m.%d')
         return value
+
+    def filter_fuel(self, queryset, name, value):
+        fuel_values = []
+        if hasattr(self.data, 'getlist'):
+            for raw_val in self.data.getlist('fuel'):
+                fuel_values.extend([f.strip() for f in raw_val.split(',') if f.strip()])
+        elif value:
+            fuel_values = [f.strip() for f in value.split(',') if f.strip()]
+        
+        if fuel_values:
+            return queryset.filter(fuel__in=fuel_values)
+        return queryset
 
     def filter_has_price(self, queryset, name, value):
         if value:
@@ -266,6 +278,37 @@ class OfferViewSet(viewsets.ReadOnlyModelViewSet):
 class SavedSearchViewSet(viewsets.ModelViewSet):
     queryset = SavedSearch.objects.all().order_by('-created_at')
     serializer_class = SavedSearchSerializer
+
+    @action(detail=True, methods=['post'])
+    def mark_all_seen(self, request, pk=None):
+        saved_search = self.get_object()
+        from django.http import QueryDict
+        from django.db.models import Q
+        
+        qdict = QueryDict(saved_search.query_string).copy()
+        if 'fuel' in qdict:
+            fuel_list = [f.strip() for val in qdict.getlist('fuel') for f in val.split(',') if f.strip()]
+            qdict['fuel'] = ','.join(fuel_list)
+            
+        base_qs = Offer.objects.annotate(
+            year_num=Cast('year', IntegerField()),
+            price_num=Cast('price', FloatField()),
+            mileage_num=Cast('mileage', IntegerField())
+        ).exclude(is_archived=True)
+        
+        f = OfferFilter(qdict, queryset=base_qs)
+        qs = f.qs
+        search_term = qdict.get('search')
+        if search_term:
+            for term in search_term.split():
+                qs = qs.filter(
+                    Q(title__icontains=term) |
+                    Q(description__icontains=term) |
+                    Q(equipment__icontains=term) |
+                    Q(location__icontains=term)
+                )
+        updated = qs.filter(is_seen=False).update(is_seen=True)
+        return Response({'status': 'marked all seen', 'updated': updated})
 
 class ScraperStatusViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ScraperStatus.objects.all()

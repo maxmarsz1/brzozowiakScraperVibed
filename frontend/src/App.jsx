@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Filter, MapPin, Bookmark, Save, Trash2, Heart, Check, LayoutGrid, LayoutList, X, Bell, Info, ArrowUp, Send, Calendar, Archive, ShieldCheck } from 'lucide-react';
+import { Filter, MapPin, Bookmark, Save, Trash2, Heart, Check, CheckCheck, LayoutGrid, LayoutList, X, Bell, Info, ArrowUp, Send, Calendar, Archive, ShieldCheck } from 'lucide-react';
 import OfferDetails from './OfferDetails';
 import { translations } from './translations';
 import './index.css';
@@ -25,9 +25,13 @@ function useDebounce(value, delay) {
     return debouncedValue;
 }
 
-const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode = 'grid', onOfferVisible }) => {
+const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode = 'grid', onOfferVisible, onOfferSeen }) => {
     const [isSeen, setIsSeen] = useState(offer.is_seen);
     const cardRef = useRef(null);
+
+    useEffect(() => {
+        setIsSeen(offer.is_seen);
+    }, [offer.is_seen]);
 
     const isSold = Boolean(offer.is_archived || (offer.title && offer.title.startsWith('[SPRZEDANE]')));
 
@@ -36,7 +40,11 @@ const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode =
             (entries) => {
                 if (entries[0].isIntersecting) {
                     if (!isSeen) {
+                        setIsSeen(true);
                         fetch(`${API_BASE_URL}/api/offers/${offer.id}/mark_seen/`, { method: 'POST' })
+                            .then(() => {
+                                if (onOfferSeen) onOfferSeen(offer.id);
+                            })
                             .catch(err => console.error("Failed to mark seen", err));
                     }
                     if (onOfferVisible && !isSold) {
@@ -50,7 +58,7 @@ const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode =
 
         if (cardRef.current) observer.observe(cardRef.current);
         return () => observer.disconnect();
-    }, [isSeen, offer.id, onOfferVisible]);
+    }, [isSeen, offer.id, onOfferVisible, onOfferSeen]);
 
     const handleToggleFavorite = (e) => {
         e.stopPropagation();
@@ -1103,6 +1111,24 @@ function App() {
         }
     }, [liveCheckEnabled, showArchived, processCheckQueue]);
 
+    const refreshSavedSearchesTimerRef = useRef(null);
+    const handleOfferSeen = useCallback((offerId) => {
+        setAllResults(prev => prev.map(o => o.id === offerId ? { ...o, is_seen: true } : o));
+        setData(prev => {
+            if (!prev || !prev.results) return prev;
+            return {
+                ...prev,
+                results: prev.results.map(o => o.id === offerId ? { ...o, is_seen: true } : o)
+            };
+        });
+        if (refreshSavedSearchesTimerRef.current) {
+            clearTimeout(refreshSavedSearchesTimerRef.current);
+        }
+        refreshSavedSearchesTimerRef.current = setTimeout(() => {
+            fetchSavedSearches();
+        }, 1500);
+    }, []);
+
     const scrollToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -1165,7 +1191,7 @@ function App() {
         if (ordering) params.append('ordering', ordering);
         if (brandFilter) params.append('brand', brandFilter);
         if (fuelFilter.length > 0) {
-            fuelFilter.forEach(f => params.append('fuel', f));
+            params.append('fuel', fuelFilter.join(','));
         }
         if (yearMin) params.append('year_min', yearMin);
         if (yearMax) params.append('year_max', yearMax);
@@ -1289,8 +1315,8 @@ function App() {
         const params = new URLSearchParams(qs);
         setSearch(params.get('search') || "");
         setBrandFilter(params.get('brand') || "");
-        const fuel = params.get('fuel');
-        setFuelFilter(fuel ? fuel.split(',') : []);
+        const fuels = params.getAll('fuel').flatMap(f => f.split(',')).filter(Boolean);
+        setFuelFilter(fuels);
         setYearMin(params.get('year_min') || "");
         setYearMax(params.get('year_max') || "");
         setPriceMin(params.get('price_min') || "");
@@ -1332,6 +1358,22 @@ function App() {
         }
         setPage(1);
         setShowSavedDrawer(false);
+    };
+
+    const markAllSeenSavedSearch = async (id, name) => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/saved_searches/${id}/mark_all_seen/`, {
+                method: 'POST'
+            });
+            if (res.ok) {
+                fetchSavedSearches();
+                fetchOffers(false);
+                showToast(t('markedAllSeenSuccess'));
+            }
+        } catch (err) {
+            console.error("Failed to mark all as seen:", err);
+            showToast('Failed to mark all as seen', 'error');
+        }
     };
 
     const deleteSavedSearch = async (id) => {
@@ -1599,13 +1641,13 @@ function App() {
                                     viewMode === 'grid' ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {allResults.map(offer => (
-                                                <OfferCard key={offer.id} offer={offer} onSelect={handleSelectOffer} t={t} showToast={showToast} onToggleFavorite={toggleFavorite} viewMode="grid" onOfferVisible={showArchived ? undefined : handleOfferVisible} />
+                                                <OfferCard key={offer.id} offer={offer} onSelect={handleSelectOffer} t={t} showToast={showToast} onToggleFavorite={toggleFavorite} viewMode="grid" onOfferVisible={showArchived ? undefined : handleOfferVisible} onOfferSeen={handleOfferSeen} />
                                             ))}
                                         </div>
                                     ) : (
                                         <div className="flex flex-col gap-3">
                                             {allResults.map(offer => (
-                                                <OfferCard key={offer.id} offer={offer} onSelect={handleSelectOffer} t={t} showToast={showToast} onToggleFavorite={toggleFavorite} viewMode="list" onOfferVisible={showArchived ? undefined : handleOfferVisible} />
+                                                <OfferCard key={offer.id} offer={offer} onSelect={handleSelectOffer} t={t} showToast={showToast} onToggleFavorite={toggleFavorite} viewMode="list" onOfferVisible={showArchived ? undefined : handleOfferVisible} onOfferSeen={handleOfferSeen} />
                                             ))}
                                         </div>
                                     )
@@ -1730,6 +1772,15 @@ function App() {
                                             </p>
                                         </div>
                                         <div className="flex gap-1.5">
+                                            {ss.new_count > 0 && (
+                                                <button
+                                                    onClick={() => markAllSeenSavedSearch(ss.id, ss.name)}
+                                                    className="p-2 bg-white/[0.04] hover:bg-emerald-500/20 text-zinc-400 hover:text-emerald-300 rounded-xl border border-white/10 transition-all cursor-pointer"
+                                                    title={t('markAllSeen')}
+                                                >
+                                                    <CheckCheck className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => toggleTelegram(ss.id, ss.telegram_notifications)}
                                                 className={`p-2 rounded-xl border transition-all cursor-pointer ${ss.telegram_notifications ? 'bg-[#0071e3]/15 border-[#0071e3]/30 text-[#0071e3]' : 'bg-white/[0.04] border-white/10 text-zinc-400 hover:text-white'}`}

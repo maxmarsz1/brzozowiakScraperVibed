@@ -22,7 +22,10 @@ class SavedSearchSerializer(serializers.ModelSerializer):
         from .views import OfferFilter
         from django.db.models import Q
         
-        qdict = QueryDict(obj.query_string)
+        qdict = QueryDict(obj.query_string).copy()
+        if 'fuel' in qdict:
+            fuels = [f.strip() for val in qdict.getlist('fuel') for f in val.split(',') if f.strip()]
+            qdict['fuel'] = ','.join(fuels)
         
         base_qs = Offer.objects.annotate(
             year_num=Cast('year', IntegerField()),
@@ -35,12 +38,13 @@ class SavedSearchSerializer(serializers.ModelSerializer):
         
         search_term = qdict.get('search')
         if search_term:
-            qs = qs.filter(
-                Q(title__icontains=search_term) |
-                Q(description__icontains=search_term) |
-                Q(equipment__icontains=search_term) |
-                Q(location__icontains=search_term)
-            )
+            for term in search_term.split():
+                qs = qs.filter(
+                    Q(title__icontains=term) |
+                    Q(description__icontains=term) |
+                    Q(equipment__icontains=term) |
+                    Q(location__icontains=term)
+                )
             
         return qs.count()
 

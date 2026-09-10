@@ -91,7 +91,9 @@ export const translations = {
         liveCheckActive: "Live Verification Active",
         liveCheckDesc: "Verifying offers as you scroll",
         sold: "SOLD",
-        markedAsSold: "offer(s) marked as sold"
+        markedAsSold: "offer(s) marked as sold",
+        markAllSeen: "Mark all as seen",
+        markedAllSeenSuccess: "All offers in saved search marked as seen"
     },
     pl: {
         title: "Brzozowiak Intelligence",
@@ -188,6 +190,8 @@ export const translations = {
         liveCheckActive: "Weryfikacja w locie aktywna",
         liveCheckDesc: "Sprawdzanie ofert podczas przewijania",
         sold: "SPRZEDANE",
-        markedAsSold: "ofert(y) oznaczono jako sprzedane"
+        markedAsSold: "ofert(y) oznaczono jako sprzedane",
+        markAllSeen: "Oznacz wszystkie jako przeczytane",
+        markedAllSeenSuccess: "Wszystkie ogłoszenia w wyszukiwaniu oznaczono jako przeczytane"
     }
 };
