@@ -122,8 +122,10 @@ def run_scraper():
     db_urls = set(Offer.objects.values_list('url', flat=True))
 
     new_urls = []
+    scraped_urls = set()
     consecutive_existing = 0
     stop_scraping = False
+    archived_count = 0
 
     for page in range(pages_count):
         if stop_scraping:
@@ -148,11 +150,12 @@ def run_scraper():
                 if a_tag and 'href' in a_tag.attrs:
                     offer_url = a_tag['href']
                     full_url = base_url + offer_url if not offer_url.startswith("http") else offer_url
+                    scraped_urls.add(full_url)
 
                     if full_url in db_urls:
                         consecutive_existing += 1
-                        if consecutive_existing >= 100 and len(db_urls) > 4000:
-                            log("Found 100 consecutive existing offers. Stopping pagination.")
+                        if page >= 9 and consecutive_existing >= 100:
+                            log("Found 100 consecutive existing offers and scanned at least 10 pages. Stopping pagination.")
                             stop_scraping = True
                             break
                     else:
@@ -237,6 +240,77 @@ def run_scraper():
     else:
         log("Database up to date.")
 
+    # Update active offers and detect sold ones
+    log("Checking if any active database offers have been sold...")
+    scraped_active_dates = []
+    
+    # Existing active offers that we saw in this scrape session
+    if scraped_urls:
+        existing_seen_dates = Offer.objects.filter(url__in=scraped_urls, is_archived=False).values_list('date', flat=True)
+        scraped_active_dates.extend([d for d in existing_seen_dates if d])
+        
+    # Get the dates of new offers we successfully scraped in this session
+    if new_urls:
+        new_seen_dates = Offer.objects.filter(url__in=new_urls, is_archived=False).values_list('date', flat=True)
+        scraped_active_dates.extend([d for d in new_seen_dates if d])
+
+    if scraped_active_dates:
+        # Filter out ancient pinned/bumped offers (older than 30 days) from triggering a massive DB-wide check
+        from datetime import timedelta
+        from django.utils import timezone
+        thirty_days_ago = (timezone.localtime(timezone.now()) - timedelta(days=30)).strftime('%Y.%m.%d')
+        
+        recent_scraped_dates = [d for d in scraped_active_dates if d >= thirty_days_ago]
+        if recent_scraped_dates:
+            oldest_date = min(recent_scraped_dates)
+        else:
+            oldest_date = thirty_days_ago
+
+        log(f"Oldest active date to check: {oldest_date}. Checking active offers with date >= {oldest_date}...")
+        
+        # Candidates for archiving: active offers newer or equal to oldest_date that were not seen
+        candidates = Offer.objects.filter(is_archived=False, date__gte=oldest_date)
+        if scraped_urls:
+            candidates = candidates.exclude(url__in=scraped_urls)
+            
+        candidates_count = candidates.count()
+        if candidates_count > 0:
+            log(f"Found {candidates_count} candidates that were not seen on the scraped pages. Verifying their status...")
+            archived_count = 0
+            for candidate in candidates:
+                try:
+                    res = requests.get(candidate.url, headers=HEADERS, timeout=10)
+                    is_gone = False
+                    if res.status_code == 404:
+                        is_gone = True
+                    else:
+                        res.encoding = "utf-8"
+                        bs = BeautifulSoup(res.text, features="html.parser")
+                        if not bs.find("div", class_="stdBxC"):
+                            is_gone = True
+                        elif "ogłoszenie nie istnieje" in res.text.lower() or "nie znaleziono ogłoszenia" in res.text.lower():
+                            is_gone = True
+                    
+                    if is_gone:
+                        candidate.is_archived = True
+                        candidate.archived_by = 'scan'
+                        if candidate.title and not candidate.title.startswith("[SPRZEDANE]"):
+                            candidate.title = f"[SPRZEDANE] {candidate.title}"
+                        candidate.save()
+                        archived_count += 1
+                        log(f"Archived sold/inactive offer: {candidate.offer_id} ({candidate.title})")
+                    
+                    time.sleep(random.uniform(0.5, 1.5))
+                except Exception as e:
+                    log(f"Error verifying candidate {candidate.offer_id}: {e}")
+            log(f"Verification complete. Archived {archived_count} offers.")
+        else:
+            log("No unseen active candidates to verify.")
+    else:
+        log("No scraped dates collected; skipping active status check.")
+
+    return archived_count
+
 
 def run_maintenance(limit=None):
     log("Running maintenance: checking for inactive offers...")
@@ -291,9 +365,12 @@ def run_maintenance(limit=None):
                 
             if is_gone:
                 offer.is_archived = True
-                offer.save(update_fields=['is_archived', 'updated_at'])
+                offer.archived_by = 'maintenance'
+                if offer.title and not offer.title.startswith("[SPRZEDANE]"):
+                    offer.title = f"[SPRZEDANE] {offer.title}"
+                offer.save(update_fields=['is_archived', 'archived_by', 'title', 'updated_at'])
                 archived_count += 1
-                log(f"Archived inactive offer: {offer.offer_id} ({offer.title})")
+                log(f"Archived inactive/sold offer: {offer.offer_id} ({offer.title})")
         except Exception as e:
             log(f"Error checking {offer.offer_id}: {e}")
             
@@ -329,7 +406,8 @@ class Command(BaseCommand):
             status.is_running = True
             status.save()
             try:
-                run_maintenance(limit=limit)
+                archived = run_maintenance(limit=limit)
+                status.last_maintenance_archived_count = archived
                 status.last_maintenance_run = timezone.now()
             except Exception as e:
                 log(f"Maintenance error: {e}")
@@ -360,7 +438,8 @@ class Command(BaseCommand):
                 status.save()
                 success = False
                 try:
-                    run_maintenance()
+                    archived = run_maintenance()
+                    status.last_maintenance_archived_count = archived
                     success = True
                 except Exception as e:
                     log(f"Maintenance error: {e}")
@@ -380,7 +459,13 @@ class Command(BaseCommand):
                 status.last_run = timezone.now()
                 status.save()
                 
-                run_scraper()
+                try:
+                    archived = run_scraper()
+                    status.refresh_from_db()
+                    status.last_scan_archived_count = archived
+                    status.save()
+                except Exception as e:
+                    log(f"Scraper error: {e}")
             else:
                 log(f"Outside scraping window (6-22). Current local hour: {now.hour}. Skipping scraper run.")
                 # We don't reset force_scrape here, so it can still be used to bypass the window if needed
@@ -397,12 +482,27 @@ class Command(BaseCommand):
             next_run_candidate = timezone.now() + timedelta(seconds=wait_time)
             next_run_local = timezone.localtime(next_run_candidate)
             
-            # If next run would fall outside 6-22, move it to 6 AM
+            # Determine if weekly maintenance is due
+            now = timezone.localtime()
+            needs_maintenance = True
+            if status.last_maintenance_run:
+                days_since_last = (now - timezone.localtime(status.last_maintenance_run)).days
+                if days_since_last < 7:
+                    needs_maintenance = False
+            
+            # If next run would fall outside 6-22, check if we need to wake up for maintenance
             if next_run_local.hour >= 22 or next_run_local.hour < 6:
-                if next_run_local.hour >= 22:
-                    target_local = (next_run_local + timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
+                if needs_maintenance:
+                    # Schedule next run for 2 AM (the maintenance window)
+                    if next_run_local.hour >= 22:
+                        target_local = (next_run_local + timedelta(days=1)).replace(hour=2, minute=0, second=0, microsecond=0)
+                    else:
+                        target_local = next_run_local.replace(hour=2, minute=0, second=0, microsecond=0)
                 else:
-                    target_local = next_run_local.replace(hour=6, minute=0, second=0, microsecond=0)
+                    if next_run_local.hour >= 22:
+                        target_local = (next_run_local + timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
+                    else:
+                        target_local = next_run_local.replace(hour=6, minute=0, second=0, microsecond=0)
                 status.next_run = target_local
             else:
                 status.next_run = next_run_candidate
