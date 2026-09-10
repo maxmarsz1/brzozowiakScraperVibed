@@ -29,6 +29,8 @@ const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode =
     const [isSeen, setIsSeen] = useState(offer.is_seen);
     const cardRef = useRef(null);
 
+    const isSold = Boolean(offer.is_archived || (offer.title && offer.title.startsWith('[SPRZEDANE]')));
+
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
@@ -37,8 +39,8 @@ const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode =
                         fetch(`${API_BASE_URL}/api/offers/${offer.id}/mark_seen/`, { method: 'POST' })
                             .catch(err => console.error("Failed to mark seen", err));
                     }
-                    if (onOfferVisible) {
-                        onOfferVisible(offer.id);
+                    if (onOfferVisible && !isSold) {
+                        onOfferVisible(offer.id, offer);
                     }
                     observer.disconnect();
                 }
@@ -509,6 +511,10 @@ function App() {
     const pendingQueueRef = useRef([]);
     const recentCheckMapRef = useRef(new Map());
     const checkTimerRef = useRef(null);
+    const allResultsRef = useRef(allResults);
+    useEffect(() => {
+        allResultsRef.current = allResults;
+    }, [allResults]);
 
     const [pageAnchors, setPageAnchors] = useState({ 1: null });
     const debouncedSearch = useDebounce(search, 500);
@@ -997,7 +1003,13 @@ function App() {
     }, []);
 
     const processCheckQueue = useCallback(async () => {
-        if (!liveCheckEnabled || pendingQueueRef.current.length === 0) return;
+        if (!liveCheckEnabled || showArchived || pendingQueueRef.current.length === 0) return;
+
+        // Filter out any offers that are already sold or archived
+        pendingQueueRef.current = pendingQueueRef.current.filter(id => {
+            const found = allResultsRef.current.find(o => o.id === id);
+            return !found || (!found.is_archived && !(found.title && found.title.startsWith('[SPRZEDANE]')));
+        });
 
         const chunk = pendingQueueRef.current.splice(0, 10);
         if (chunk.length === 0) return;
@@ -1014,18 +1026,6 @@ function App() {
                 const archivedSet = new Set(resData.archived_ids);
                 const resultsMap = new Map((resData.results || []).map(r => [r.id, r]));
 
-                setOffers(prev => prev.map(off => {
-                    if (archivedSet.has(off.id)) {
-                        const item = resultsMap.get(off.id);
-                        return {
-                            ...off,
-                            is_archived: true,
-                            title: item?.title || (off.title?.startsWith('[SPRZEDANE]') ? off.title : `[SPRZEDANE] ${off.title}`)
-                        };
-                    }
-                    return off;
-                }));
-
                 setAllResults(prev => prev.map(off => {
                     if (archivedSet.has(off.id)) {
                         const item = resultsMap.get(off.id);
@@ -1037,6 +1037,24 @@ function App() {
                     }
                     return off;
                 }));
+
+                setData(prev => {
+                    if (!prev || !prev.results) return prev;
+                    return {
+                        ...prev,
+                        results: prev.results.map(off => {
+                            if (archivedSet.has(off.id)) {
+                                const item = resultsMap.get(off.id);
+                                return {
+                                    ...off,
+                                    is_archived: true,
+                                    title: item?.title || (off.title?.startsWith('[SPRZEDANE]') ? off.title : `[SPRZEDANE] ${off.title}`)
+                                };
+                            }
+                            return off;
+                        })
+                    };
+                });
             }
         } catch (err) {
             console.error("Live check chunk error:", err);
@@ -1045,10 +1063,21 @@ function App() {
         if (pendingQueueRef.current.length > 0) {
             setTimeout(processCheckQueue, 400);
         }
-    }, [liveCheckEnabled]);
+    }, [liveCheckEnabled, showArchived]);
 
-    const handleOfferVisible = useCallback((offerId) => {
-        if (!liveCheckEnabled) return;
+    const handleOfferVisible = useCallback((offerId, offer) => {
+        if (!liveCheckEnabled || showArchived) return;
+
+        const isSold = Boolean(
+            offer?.is_archived ||
+            (offer?.title && offer.title.startsWith('[SPRZEDANE]'))
+        );
+        if (isSold) return;
+
+        const existing = allResultsRef.current.find(o => o.id === offerId);
+        if (existing && (existing.is_archived || (existing.title && existing.title.startsWith('[SPRZEDANE]')))) {
+            return;
+        }
 
         const now = Date.now();
         const tenMinutes = 10 * 60 * 1000;
@@ -1072,7 +1101,7 @@ function App() {
                 processCheckQueue();
             }, 800);
         }
-    }, [liveCheckEnabled, processCheckQueue]);
+    }, [liveCheckEnabled, showArchived, processCheckQueue]);
 
     const scrollToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1570,13 +1599,13 @@ function App() {
                                     viewMode === 'grid' ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {allResults.map(offer => (
-                                                <OfferCard key={offer.id} offer={offer} onSelect={handleSelectOffer} t={t} showToast={showToast} onToggleFavorite={toggleFavorite} viewMode="grid" onOfferVisible={handleOfferVisible} />
+                                                <OfferCard key={offer.id} offer={offer} onSelect={handleSelectOffer} t={t} showToast={showToast} onToggleFavorite={toggleFavorite} viewMode="grid" onOfferVisible={showArchived ? undefined : handleOfferVisible} />
                                             ))}
                                         </div>
                                     ) : (
                                         <div className="flex flex-col gap-3">
                                             {allResults.map(offer => (
-                                                <OfferCard key={offer.id} offer={offer} onSelect={handleSelectOffer} t={t} showToast={showToast} onToggleFavorite={toggleFavorite} viewMode="list" onOfferVisible={handleOfferVisible} />
+                                                <OfferCard key={offer.id} offer={offer} onSelect={handleSelectOffer} t={t} showToast={showToast} onToggleFavorite={toggleFavorite} viewMode="list" onOfferVisible={showArchived ? undefined : handleOfferVisible} />
                                             ))}
                                         </div>
                                     )

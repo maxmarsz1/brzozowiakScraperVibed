@@ -113,11 +113,16 @@ class OfferViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         # We cast the char fields to numbers so sorting and range filtering work correctly
-        is_archived = self.request.query_params.get('is_archived')
-        if is_archived == 'true':
-            queryset = Offer.objects.filter(is_archived=True)
+        if self.action != 'list':
+            queryset = Offer.objects.all()
         else:
-            queryset = Offer.objects.exclude(is_archived=True)
+            is_archived = self.request.query_params.get('is_archived')
+            if is_archived == 'true':
+                queryset = Offer.objects.filter(is_archived=True)
+            elif is_archived == 'all':
+                queryset = Offer.objects.all()
+            else:
+                queryset = Offer.objects.exclude(is_archived=True)
         return queryset.annotate(
             year_num=Cast('year', IntegerField()),
             price_num=Cast('price', FloatField()),
@@ -159,7 +164,8 @@ class OfferViewSet(viewsets.ReadOnlyModelViewSet):
         archived_ids = []
 
         for offer in offers:
-            if offer.is_archived:
+            is_sold = offer.is_archived or (offer.title and offer.title.startswith('[SPRZEDANE]'))
+            if is_sold:
                 results.append({
                     'id': offer.id,
                     'is_archived': True,
