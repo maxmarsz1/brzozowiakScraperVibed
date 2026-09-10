@@ -7,6 +7,8 @@ from django.shortcuts import render
 from django.db.models import FloatField, IntegerField, CharField
 from django.db.models.functions import Cast, Replace
 from django.db.models import Value
+from datetime import timedelta
+from django.utils import timezone
 from .models import Offer, SavedSearch, ScraperStatus, ScraperLog
 from .serializers import OfferSerializer, SavedSearchSerializer, ScraperStatusSerializer, ScraperLogSerializer
 
@@ -136,6 +138,124 @@ class OfferViewSet(viewsets.ReadOnlyModelViewSet):
         offer.is_favorite = not offer.is_favorite
         offer.save(update_fields=['is_favorite'])
         return Response({'status': 'toggled', 'is_favorite': offer.is_favorite})
+
+    @action(detail=False, methods=['post'])
+    def check_active_chunk(self, request):
+        offer_ids = request.data.get('offer_ids', [])
+        if not isinstance(offer_ids, list) or not offer_ids:
+            return Response({'error': 'offer_ids must be a non-empty list'}, status=400)
+
+        # Cap chunk size to avoid overload (up to 20 IDs)
+        clean_ids = [int(i) for i in offer_ids[:20] if str(i).isdigit()]
+        if not clean_ids:
+            return Response({'results': [], 'archived_ids': [], 'checked_live': 0})
+
+        offers = list(Offer.objects.filter(id__in=clean_ids))
+        now = timezone.now()
+        cooldown_threshold = now - timedelta(minutes=10)
+
+        to_check = []
+        results = []
+        archived_ids = []
+
+        for offer in offers:
+            if offer.is_archived:
+                results.append({
+                    'id': offer.id,
+                    'is_archived': True,
+                    'title': offer.title,
+                    'status': 'already_archived'
+                })
+                archived_ids.append(offer.id)
+                continue
+
+            if offer.last_checked_at and offer.last_checked_at >= cooldown_threshold:
+                results.append({
+                    'id': offer.id,
+                    'is_archived': False,
+                    'title': offer.title,
+                    'status': 'cooldown'
+                })
+                continue
+
+            to_check.append(offer)
+
+        if to_check:
+            import requests
+            from bs4 import BeautifulSoup
+            from concurrent.futures import ThreadPoolExecutor
+
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept-Language": "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7",
+            }
+
+            def verify_single(item):
+                is_gone = False
+                try:
+                    res = requests.get(item.url, headers=headers, timeout=8)
+                    if res.status_code in (404, 410):
+                        is_gone = True
+                    elif res.status_code == 200:
+                        res.encoding = 'utf-8'
+                        bs = BeautifulSoup(res.text, features='html.parser')
+                        offer_data = bs.find('div', class_='stdBxC')
+                        text_lower = res.text.lower()
+                        has_gone = (
+                            'zostało usunięte' in text_lower or
+                            'wygasło' in text_lower or
+                            'ogłoszenie nie istnieje' in text_lower or
+                            'nie znaleziono ogłoszenia' in text_lower
+                        )
+                        if not offer_data or has_gone:
+                            is_gone = True
+                except Exception:
+                    # Connection error/timeout: do not archive on transient error
+                    return item, False, False
+
+                return item, is_gone, True
+
+            with ThreadPoolExecutor(max_workers=min(5, len(to_check))) as executor:
+                check_results = list(executor.map(verify_single, to_check))
+
+            for item, is_gone, check_ok in check_results:
+                if check_ok:
+                    item.last_checked_at = now
+                    if is_gone:
+                        item.is_archived = True
+                        item.archived_by = 'scroll'
+                        if item.title and not item.title.startswith('[SPRZEDANE]'):
+                            item.title = f"[SPRZEDANE] {item.title}"
+                        item.save(update_fields=['is_archived', 'archived_by', 'title', 'last_checked_at', 'updated_at'])
+                        archived_ids.append(item.id)
+                        results.append({
+                            'id': item.id,
+                            'is_archived': True,
+                            'title': item.title,
+                            'status': 'newly_archived'
+                        })
+                    else:
+                        item.save(update_fields=['last_checked_at', 'updated_at'])
+                        results.append({
+                            'id': item.id,
+                            'is_archived': False,
+                            'title': item.title,
+                            'status': 'active'
+                        })
+                else:
+                    results.append({
+                        'id': item.id,
+                        'is_archived': item.is_archived,
+                        'title': item.title,
+                        'status': 'check_error'
+                    })
+
+        return Response({
+            'results': results,
+            'archived_ids': archived_ids,
+            'total_requested': len(clean_ids),
+            'checked_live': len(to_check)
+        })
 
 class SavedSearchViewSet(viewsets.ModelViewSet):
     queryset = SavedSearch.objects.all().order_by('-created_at')

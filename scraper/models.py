@@ -38,6 +38,7 @@ class Offer(models.Model):
     is_favorite = models.BooleanField(default=False, null=True)
     is_archived = models.BooleanField(default=False, null=True)
     archived_by = models.CharField(max_length=50, default='scan', null=True, blank=True)
+    last_checked_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
     def __str__(self):
         return f"{self.title} - {self.offer_id}"

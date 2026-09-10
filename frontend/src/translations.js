@@ -86,7 +86,12 @@ export const translations = {
         telegramNotifications: "Telegram Notifications",
         telegramNotConfigured: "Telegram bot is not configured in .env",
         testTelegram: "Test Bot",
-        testMessageSent: "Test message sent successfully!"
+        testMessageSent: "Test message sent successfully!",
+        liveCheck: "Live Check",
+        liveCheckActive: "Live Verification Active",
+        liveCheckDesc: "Verifying offers as you scroll",
+        sold: "SOLD",
+        markedAsSold: "offer(s) marked as sold"
     },
     pl: {
         title: "Brzozowiak Intelligence",
@@ -178,6 +183,11 @@ export const translations = {
         telegramNotifications: "Powiadomienia Telegram",
         telegramNotConfigured: "Bot Telegram nie jest skonfigurowany w pliku .env",
         testTelegram: "Testuj Bota",
-        testMessageSent: "Wiadomość testowa została wysłana!"
+        testMessageSent: "Wiadomość testowa została wysłana!",
+        liveCheck: "Weryfikacja w locie",
+        liveCheckActive: "Weryfikacja w locie aktywna",
+        liveCheckDesc: "Sprawdzanie ofert podczas przewijania",
+        sold: "SPRZEDANE",
+        markedAsSold: "ofert(y) oznaczono jako sprzedane"
     }
 };

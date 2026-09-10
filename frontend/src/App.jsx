@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { Filter, MapPin, Bookmark, Save, Trash2, Heart, Check, LayoutGrid, LayoutList, X, Bell, Info, ArrowUp, Send, Calendar, Archive } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Filter, MapPin, Bookmark, Save, Trash2, Heart, Check, LayoutGrid, LayoutList, X, Bell, Info, ArrowUp, Send, Calendar, Archive, ShieldCheck } from 'lucide-react';
 import OfferDetails from './OfferDetails';
 import { translations } from './translations';
 import './index.css';
@@ -25,27 +25,30 @@ function useDebounce(value, delay) {
     return debouncedValue;
 }
 
-const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode = 'grid' }) => {
+const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode = 'grid', onOfferVisible }) => {
     const [isSeen, setIsSeen] = useState(offer.is_seen);
     const cardRef = useRef(null);
 
     useEffect(() => {
-        if (isSeen) return;
-
         const observer = new IntersectionObserver(
             (entries) => {
                 if (entries[0].isIntersecting) {
-                    fetch(`${API_BASE_URL}/api/offers/${offer.id}/mark_seen/`, { method: 'POST' })
-                        .catch(err => console.error("Failed to mark seen", err));
+                    if (!isSeen) {
+                        fetch(`${API_BASE_URL}/api/offers/${offer.id}/mark_seen/`, { method: 'POST' })
+                            .catch(err => console.error("Failed to mark seen", err));
+                    }
+                    if (onOfferVisible) {
+                        onOfferVisible(offer.id);
+                    }
                     observer.disconnect();
                 }
             },
-            { threshold: 0.3 }
+            { threshold: 0.2 }
         );
 
         if (cardRef.current) observer.observe(cardRef.current);
         return () => observer.disconnect();
-    }, [isSeen, offer.id]);
+    }, [isSeen, offer.id, onOfferVisible]);
 
     const handleToggleFavorite = (e) => {
         e.stopPropagation();
@@ -65,15 +68,22 @@ const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode =
             >
                 <Heart className={`w-4 h-4 transition-colors ${offer.is_favorite ? 'fill-rose-500 text-rose-500' : 'text-white/60 group-hover/btn:text-rose-400'}`} />
             </button>
-            {!isSeen && (
+            {offer.is_archived ? (
+                <div className="absolute top-3 left-3 z-20" title={t('showArchived')}>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/25 backdrop-blur-md border border-rose-500/40 text-[10px] font-semibold text-rose-300 tracking-wider shadow-sm">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                        {t('sold') || 'SPRZEDANE'}
+                    </span>
+                </div>
+            ) : !isSeen ? (
                 <div className="absolute top-3 left-3 z-20" title={t('newOffer')}>
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-[10px] font-semibold text-white tracking-wider shadow-sm">
                         <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
                         {t('newOffer') || 'NEW'}
                     </span>
                 </div>
-            )}
-            <div className="glass-card h-full overflow-hidden flex flex-col">
+            ) : null}
+            <div className={`glass-card h-full overflow-hidden flex flex-col transition-all duration-300 ${offer.is_archived ? 'opacity-60 hover:opacity-100' : ''}`}>
                 <div className="h-60 sm:h-64 relative bg-black/30 flex items-center justify-center overflow-hidden border-b border-white/[0.06]">
                     {offer.img && offer.img !== 'NULL' ? (
                         <>
@@ -151,15 +161,22 @@ const ListCard = ({ offer, onSelect, t, showToast, isSeen, isFavorite, handleTog
         >
             <Heart className={`w-3.5 h-3.5 transition-colors ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-white/60 group-hover/btn:text-rose-400'}`} />
         </button>
-        {!isSeen && (
+        {offer.is_archived ? (
+            <div className="absolute top-2.5 left-2.5 z-20" title={t('showArchived')}>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/25 backdrop-blur-md border border-rose-500/40 text-[9px] font-semibold text-rose-300 tracking-wider shadow-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                    {t('sold') || 'SPRZEDANE'}
+                </span>
+            </div>
+        ) : !isSeen ? (
             <div className="absolute top-2.5 left-2.5 z-20">
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-[9px] font-semibold text-white tracking-wider">
                     <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
                     {t('newOffer') || 'NEW'}
                 </span>
             </div>
-        )}
-        <div className="glass-card overflow-hidden flex max-h-36 sm:max-h-48">
+        ) : null}
+        <div className={`glass-card overflow-hidden flex max-h-36 sm:max-h-48 transition-all duration-300 ${offer.is_archived ? 'opacity-60 hover:opacity-100' : ''}`}>
             <div className="w-32 sm:w-56 shrink-0 self-stretch relative bg-black/30 flex items-center justify-center overflow-hidden border-r border-white/[0.06]">
                 <BlurImage img={offer.img} title={offer.title} className="relative w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-xl z-10" />
                 {(!offer.img || offer.img === 'NULL') && <span className="text-zinc-500 text-[10px] sm:text-xs text-center px-2">{t('noImage')}</span>}
@@ -484,6 +501,14 @@ function App() {
     const [scraperStatus, setScraperStatus] = useState(null);
     const [isTriggering, setIsTriggering] = useState(false);
     const [triggerAnchorRun, setTriggerAnchorRun] = useState(null);
+
+    const [liveCheckEnabled, setLiveCheckEnabled] = useState(() => {
+        const saved = localStorage.getItem('liveCheckEnabled');
+        return saved !== null ? saved === 'true' : true;
+    });
+    const pendingQueueRef = useRef([]);
+    const recentCheckMapRef = useRef(new Map());
+    const checkTimerRef = useRef(null);
 
     const [pageAnchors, setPageAnchors] = useState({ 1: null });
     const debouncedSearch = useDebounce(search, 500);
@@ -971,6 +996,84 @@ function App() {
         return () => window.removeEventListener('popstate', handlePopState);
     }, []);
 
+    const processCheckQueue = useCallback(async () => {
+        if (!liveCheckEnabled || pendingQueueRef.current.length === 0) return;
+
+        const chunk = pendingQueueRef.current.splice(0, 10);
+        if (chunk.length === 0) return;
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/api/offers/check_active_chunk/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ offer_ids: chunk }),
+            });
+            if (!res.ok) return;
+            const resData = await res.json();
+            if (resData.archived_ids && resData.archived_ids.length > 0) {
+                const archivedSet = new Set(resData.archived_ids);
+                const resultsMap = new Map((resData.results || []).map(r => [r.id, r]));
+
+                setOffers(prev => prev.map(off => {
+                    if (archivedSet.has(off.id)) {
+                        const item = resultsMap.get(off.id);
+                        return {
+                            ...off,
+                            is_archived: true,
+                            title: item?.title || (off.title?.startsWith('[SPRZEDANE]') ? off.title : `[SPRZEDANE] ${off.title}`)
+                        };
+                    }
+                    return off;
+                }));
+
+                setAllResults(prev => prev.map(off => {
+                    if (archivedSet.has(off.id)) {
+                        const item = resultsMap.get(off.id);
+                        return {
+                            ...off,
+                            is_archived: true,
+                            title: item?.title || (off.title?.startsWith('[SPRZEDANE]') ? off.title : `[SPRZEDANE] ${off.title}`)
+                        };
+                    }
+                    return off;
+                }));
+            }
+        } catch (err) {
+            console.error("Live check chunk error:", err);
+        }
+
+        if (pendingQueueRef.current.length > 0) {
+            setTimeout(processCheckQueue, 400);
+        }
+    }, [liveCheckEnabled]);
+
+    const handleOfferVisible = useCallback((offerId) => {
+        if (!liveCheckEnabled) return;
+
+        const now = Date.now();
+        const tenMinutes = 10 * 60 * 1000;
+        const lastChecked = recentCheckMapRef.current.get(offerId);
+
+        if (lastChecked && (now - lastChecked) < tenMinutes) {
+            return;
+        }
+
+        recentCheckMapRef.current.set(offerId, now);
+        if (!pendingQueueRef.current.includes(offerId)) {
+            pendingQueueRef.current.push(offerId);
+        }
+
+        if (pendingQueueRef.current.length >= 5) {
+            if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
+            processCheckQueue();
+        } else {
+            if (checkTimerRef.current) clearTimeout(checkTimerRef.current);
+            checkTimerRef.current = setTimeout(() => {
+                processCheckQueue();
+            }, 800);
+        }
+    }, [liveCheckEnabled, processCheckQueue]);
+
     const scrollToTop = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -1323,6 +1426,26 @@ function App() {
                         )}
 
                         <button
+                            onClick={() => {
+                                const next = !liveCheckEnabled;
+                                setLiveCheckEnabled(next);
+                                localStorage.setItem('liveCheckEnabled', String(next));
+                                if (!next) {
+                                    pendingQueueRef.current = [];
+                                }
+                            }}
+                            className={`relative flex items-center justify-center gap-2 px-3.5 py-2 rounded-full border text-xs font-medium tracking-tight transition-all duration-200 cursor-pointer w-full md:w-auto ${liveCheckEnabled
+                                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300 font-semibold shadow-sm'
+                                : 'bg-white/[0.05] border-white/10 text-zinc-400 hover:text-white hover:bg-white/[0.09]'
+                                }`}
+                            title={t('liveCheckDesc')}
+                        >
+                            <span className={`w-1.5 h-1.5 rounded-full ${liveCheckEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-600'}`} />
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            <span className="uppercase tracking-wider text-[11px]">{t('liveCheck')}</span>
+                        </button>
+
+                        <button
                             onClick={() => setOnlyFavorites(!onlyFavorites)}
                             className={`relative flex items-center justify-center gap-2 px-4 py-2 rounded-full border text-xs font-medium tracking-tight transition-all duration-200 group w-full md:w-auto cursor-pointer ${onlyFavorites
                                 ? 'bg-rose-500/15 border-rose-500/30 text-rose-300 font-semibold shadow-sm'
@@ -1447,13 +1570,13 @@ function App() {
                                     viewMode === 'grid' ? (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                             {allResults.map(offer => (
-                                                <OfferCard key={offer.id} offer={offer} onSelect={handleSelectOffer} t={t} showToast={showToast} onToggleFavorite={toggleFavorite} viewMode="grid" />
+                                                <OfferCard key={offer.id} offer={offer} onSelect={handleSelectOffer} t={t} showToast={showToast} onToggleFavorite={toggleFavorite} viewMode="grid" onOfferVisible={handleOfferVisible} />
                                             ))}
                                         </div>
                                     ) : (
                                         <div className="flex flex-col gap-3">
                                             {allResults.map(offer => (
-                                                <OfferCard key={offer.id} offer={offer} onSelect={handleSelectOffer} t={t} showToast={showToast} onToggleFavorite={toggleFavorite} viewMode="list" />
+                                                <OfferCard key={offer.id} offer={offer} onSelect={handleSelectOffer} t={t} showToast={showToast} onToggleFavorite={toggleFavorite} viewMode="list" onOfferVisible={handleOfferVisible} />
                                             ))}
                                         </div>
                                     )
