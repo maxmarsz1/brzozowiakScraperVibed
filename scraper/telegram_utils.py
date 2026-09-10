@@ -116,6 +116,36 @@ def offer_matches_search(offer, query_string):
             if not all(k in text_to_search for k in keywords):
                 return False
 
+        # Period / within check
+        period_val = get_p('period') or get_p('within_days')
+        if period_val and offer.date:
+            val_str = str(period_val).strip().upper()
+            preset_map = {
+                '1D': 1, '1W': 7, '2W': 14, '3W': 21,
+                '1M': 30, '2M': 60, '3M': 90,
+            }
+            days = preset_map.get(val_str)
+            if days is None:
+                try:
+                    days = int(val_str.rstrip('D'))
+                except ValueError:
+                    days = None
+            if days is not None:
+                from django.utils import timezone
+                from datetime import timedelta
+                cutoff = (timezone.localtime().date() - timedelta(days=days)).strftime('%Y.%m.%d')
+                if offer.date < cutoff:
+                    return False
+
+        # Static published date checks
+        pub_after = get_p('published_after')
+        if pub_after and offer.date and offer.date < pub_after:
+            return False
+
+        pub_before = get_p('published_before')
+        if pub_before and offer.date and offer.date > pub_before:
+            return False
+
         return True
     except Exception as e:
         print(f"Error matching offer: {e}")

@@ -27,11 +27,37 @@ class OfferFilter(filters.FilterSet):
     has_price = filters.BooleanFilter(method='filter_has_price')
     published_after = filters.CharFilter(method='filter_published_after')
     published_before = filters.CharFilter(method='filter_published_before')
+    period = filters.CharFilter(method='filter_period')
+    within_days = filters.CharFilter(method='filter_period')
 
     def filter_has_price(self, queryset, name, value):
         if value:
             return queryset.exclude(price__isnull=True).exclude(price='').exclude(price='NULL')
         return queryset
+
+    def filter_period(self, queryset, name, value):
+        if not value:
+            return queryset
+        val_str = str(value).strip().upper()
+        preset_map = {
+            '1D': 1,
+            '1W': 7,
+            '2W': 14,
+            '3W': 21,
+            '1M': 30,
+            '2M': 60,
+            '3M': 90,
+        }
+        days = preset_map.get(val_str)
+        if days is None:
+            try:
+                days = int(val_str.rstrip('D'))
+            except ValueError:
+                return queryset
+        from django.utils import timezone
+        from datetime import timedelta
+        cutoff_date = (timezone.localtime().date() - timedelta(days=days)).strftime('%Y.%m.%d')
+        return queryset.exclude(date__isnull=True).exclude(date='').filter(date__gte=cutoff_date)
 
     def filter_published_after(self, queryset, name, value):
         # date field is stored as YYYY.MM.DD — string comparison is lexicographically sortable
@@ -64,7 +90,7 @@ class OfferViewSet(viewsets.ReadOnlyModelViewSet):
         if is_archived == 'true':
             queryset = Offer.objects.filter(is_archived=True)
         else:
-            queryset = Offer.objects.filter(is_archived=False)
+            queryset = Offer.objects.exclude(is_archived=True)
         return queryset.annotate(
             year_num=Cast('year', IntegerField()),
             price_num=Cast('price', FloatField()),

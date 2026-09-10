@@ -28,7 +28,7 @@ class SavedSearchSerializer(serializers.ModelSerializer):
             year_num=Cast('year', IntegerField()),
             price_num=Cast('price', FloatField()),
             mileage_num=Cast('mileage', IntegerField())
-        ).filter(is_seen=False, is_archived=False)
+        ).filter(is_seen=False).exclude(is_archived=True)
         
         f = OfferFilter(qdict, queryset=base_qs)
         qs = f.qs

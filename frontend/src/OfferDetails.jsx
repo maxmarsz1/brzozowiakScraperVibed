@@ -174,13 +174,13 @@ const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
     const renderSpec = (icon, labelKey, value) => {
         if (!value || value === 'NULL' || value === '-') return null;
         return (
-            <div className="flex items-center gap-3 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-blue-500/30 transition-colors">
-                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+            <div className="flex items-center gap-3 p-3.5 bg-white/[0.03] rounded-2xl border border-white/[0.06] hover:border-white/15 transition-colors">
+                <div className="p-2 bg-white/[0.06] rounded-xl text-zinc-300">
                     {icon}
                 </div>
                 <div>
-                    <div className="text-xs text-slate-500">{t(labelKey)}</div>
-                    <div className="text-sm font-semibold text-slate-200">{value}</div>
+                    <div className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">{t(labelKey)}</div>
+                    <div className="text-xs font-semibold text-zinc-200 mt-0.5">{value}</div>
                 </div>
             </div>
         );
@@ -194,20 +194,20 @@ const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-8 animate-in fade-in duration-200">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+                className="absolute inset-0 bg-black/60 backdrop-blur-xl"
                 onClick={onBack}
             ></div>
 
             {/* Modal Content Wrapper */}
             <div
-                className="relative w-full max-w-6xl max-h-full flex flex-col bg-slate-900 border border-slate-700/60 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-4 duration-300"
+                className="relative w-full max-w-6xl max-h-full flex flex-col bg-zinc-900/85 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl shadow-black/80 animate-in slide-in-from-bottom-4 duration-300"
             >
                 {/* Fixed Close Button (relative to the modal box) */}
                 <button
                     onClick={onBack}
-                    className="absolute top-4 right-4 z-40 p-2 bg-slate-950/60 hover:bg-slate-800 text-white rounded-full backdrop-blur-md border border-slate-700/50 shadow-2xl transition-all hover:scale-110 group"
+                    className="absolute top-4 right-4 z-40 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md border border-white/15 shadow-xl transition-all duration-200 cursor-pointer group"
                 >
-                    <X className="w-6 h-6 group-hover:rotate-90 transition-transform" />
+                    <X className="w-5 h-5 group-hover:rotate-90 transition-transform" />
                 </button>
 
                 {/* Scrollable Content Container */}
@@ -215,10 +215,10 @@ const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
                     ref={modalRef}
                     className="w-full h-full overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-8"
                 >
-                    <div className="flex flex-col gap-8 lg:grid lg:grid-cols-2 lg:grid-rows-[auto_1fr_auto] lg:items-start lg:gap-8">
+                    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:grid-rows-[auto_1fr_auto] lg:items-start lg:gap-8">
                         {/* Main Image */}
-                        <div className="glass-panel overflow-hidden relative order-1 lg:col-start-1 lg:row-start-1">
-                                <div className="relative bg-slate-800/80 flex items-center justify-center overflow-hidden rounded-xl h-[250px] sm:h-[400px]">
+                        <div className="glass-panel overflow-hidden relative order-1 lg:col-start-1 lg:row-start-1 border border-white/[0.08]">
+                                <div className="relative bg-black/40 flex items-center justify-center overflow-hidden rounded-2xl h-[250px] sm:h-[400px]">
                                     {images.length > 0 ? (
                                         <>
                                             {/* Blurred background fill */}
@@ -228,33 +228,33 @@ const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
                                                 key={images[currentImageIndex]}
                                                 src={images[currentImageIndex]}
                                                 alt={offer.title}
-                                                className="relative w-full h-full object-contain rounded-lg drop-shadow-2xl transition-opacity duration-300"
+                                                className="relative w-full h-full object-contain rounded-xl drop-shadow-2xl transition-opacity duration-300"
                                                 onClick={() => setPreviewOpen(true)}
                                             />
 
                                             {/* Fullscreen button */}
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); setPreviewOpen(true); }}
-                                                className="absolute bottom-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors"
+                                                className="absolute bottom-4 right-4 z-10 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-md border border-white/10 transition-colors cursor-pointer"
                                             >
-                                                <Maximize className="w-5 h-5" />
+                                                <Maximize className="w-4 h-4" />
                                             </button>
 
                                             {images.length > 1 && (
                                                 <>
-                                                    <button onClick={(e) => { e.stopPropagation(); prevImage(); }} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors z-10">
-                                                        <ChevronLeft className="w-6 h-6" />
+                                                    <button onClick={(e) => { e.stopPropagation(); prevImage(); }} className="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-md border border-white/10 transition-colors z-10 cursor-pointer">
+                                                        <ChevronLeft className="w-5 h-5" />
                                                     </button>
-                                                    <button onClick={(e) => { e.stopPropagation(); nextImage(); }} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors z-10">
-                                                        <ChevronRight className="w-6 h-6" />
+                                                    <button onClick={(e) => { e.stopPropagation(); nextImage(); }} className="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-md border border-white/10 transition-colors z-10 cursor-pointer">
+                                                        <ChevronRight className="w-5 h-5" />
                                                     </button>
 
-                                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10 bg-black/40 px-3 py-1.5 rounded-full overflow-x-auto max-w-[80%] custom-scrollbar">
+                                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10 bg-black/50 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full overflow-x-auto max-w-[80%] custom-scrollbar">
                                                         {images.map((_, idx) => (
                                                             <button
                                                                 key={idx}
                                                                 onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(idx); }}
-                                                                className={`w-2 h-2 rounded-full transition-colors flex-shrink-0 ${idx === currentImageIndex ? 'bg-white' : 'bg-white/40 hover:bg-white/80'}`}
+                                                                className={`w-2 h-2 rounded-full transition-colors flex-shrink-0 cursor-pointer ${idx === currentImageIndex ? 'bg-white' : 'bg-white/40 hover:bg-white/80'}`}
                                                             />
                                                         ))}
                                                     </div>
@@ -262,26 +262,26 @@ const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
                                             )}
                                         </>
                                     ) : (
-                                        <div className="h-64 flex items-center justify-center text-slate-500">{t('noImage')}</div>
+                                        <div className="h-64 flex items-center justify-center text-zinc-500 text-xs font-medium">{t('noImage')}</div>
                                     )}
                                 </div>
                             </div>
 
                         {/* Description */}
-                        <div className="glass-panel p-5 sm:p-6 md:p-8 order-3 lg:col-start-1 lg:row-start-2">
-                                <h3 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6 border-b border-slate-700 pb-4">{t('sellerDescription')}</h3>
-                                <div className="text-slate-300 leading-relaxed whitespace-pre-wrap font-light text-[13px] sm:text-sm">
+                        <div className="glass-panel p-5 sm:p-6 md:p-8 order-3 lg:col-start-1 lg:row-start-2 border border-white/[0.08]">
+                                <h3 className="text-base sm:text-lg font-semibold text-white mb-4 border-b border-white/[0.08] pb-3 tracking-tight">{t('sellerDescription')}</h3>
+                                <div className="text-zinc-300 leading-relaxed whitespace-pre-wrap font-normal text-xs sm:text-sm">
                                     {offer.description && offer.description !== 'NULL' ? offer.description : t('noDescription')}
                                 </div>
                             </div>
 
                         {/* Equipment list */}
                         {equipmentList.length > 0 && (
-                            <div className="glass-panel p-5 sm:p-6 md:p-8 order-4 lg:col-start-1 lg:row-start-3">
-                                    <h3 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6 border-b border-slate-700 pb-4">{t('equipment')}</h3>
+                            <div className="glass-panel p-5 sm:p-6 md:p-8 order-4 lg:col-start-1 lg:row-start-3 border border-white/[0.08]">
+                                    <h3 className="text-base sm:text-lg font-semibold text-white mb-4 border-b border-white/[0.08] pb-3 tracking-tight">{t('equipment')}</h3>
                                     <div className="flex flex-wrap gap-2">
                                         {equipmentList.map((item, idx) => (
-                                            <span key={idx} className="bg-slate-800 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-full text-xs font-medium">
+                                            <span key={idx} className="bg-white/[0.04] border border-white/10 text-zinc-300 px-3 py-1 rounded-full text-xs font-medium">
                                                 {item}
                                             </span>
                                         ))}
@@ -289,45 +289,45 @@ const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
                                 </div>
                             )}
                         {/* Pricing & Main Info */}
-                        <div className="glass-panel p-6 md:p-8 lg:sticky lg:top-24 order-2 lg:col-start-2 lg:row-start-1 lg:row-span-3 relative">
+                        <div className="glass-panel p-6 md:p-8 lg:sticky lg:top-24 order-2 lg:col-start-2 lg:row-start-1 lg:row-span-3 relative border border-white/[0.08]">
                                 <button
                                     onClick={() => onToggleFavorite(offer.id, offer.is_favorite)}
-                                    className="absolute top-6 right-6 p-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-rose-400 rounded-xl transition-all border border-slate-700 shadow-xl group/fav hover:scale-110 z-10"
+                                    className="absolute top-6 right-6 p-2.5 bg-black/40 hover:bg-black/60 backdrop-blur-xl text-zinc-400 hover:text-rose-400 rounded-full transition-all duration-200 border border-white/10 hover:border-white/20 shadow-md group/fav cursor-pointer z-10"
                                     title={offer.is_favorite ? t('removeFavorite') : t('addFavorite')}
                                 >
-                                    <Heart className={`w-5 h-5 transition-colors ${offer.is_favorite ? 'fill-rose-500 text-rose-500' : 'text-slate-400 group-hover/fav:text-rose-400'}`} />
+                                    <Heart className={`w-4 h-4 transition-colors ${offer.is_favorite ? 'fill-rose-500 text-rose-500' : 'text-white/60 group-hover/fav:text-rose-400'}`} />
                                 </button>
-                                <div className="text-sm text-slate-500 mb-2 font-mono">{t('id')}: {offer.offer_id}</div>
-                                <h1 className="text-xl sm:text-3xl font-extrabold text-white mb-4 leading-tight pr-12">{offer.title}</h1>
+                                <div className="text-xs text-zinc-500 mb-2 font-mono">{t('id')}: {offer.offer_id}</div>
+                                <h1 className="text-xl sm:text-2xl font-semibold text-white mb-4 leading-snug tracking-tight pr-12">{offer.title}</h1>
                                 <div className="flex items-center gap-3 mb-6 w-full">
-                                    <div className="flex-1 text-2xl sm:text-4xl font-black text-emerald-400 bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-500/20 text-center sm:text-left">
+                                    <div className="flex-1 text-2xl sm:text-3xl font-bold text-white tracking-tight bg-white/[0.04] px-4 py-3 rounded-2xl border border-white/10 text-center sm:text-left">
                                         {offer.price ? `${String(parseInt(offer.price, 10)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')} PLN` : t('askPrice')}
                                     </div>
                                     <a
                                         href={offer.url}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="shrink-0 p-3 sm:py-4 sm:px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-[0_10px_20px_rgba(37,99,235,0.3)] flex items-center justify-center gap-2 transform hover:-translate-y-1 active:scale-95"
+                                        className="shrink-0 p-3 sm:py-3.5 sm:px-6 bg-[#0a84ff] hover:bg-[#0071e3] text-white font-medium rounded-2xl border border-blue-400/30 transition-all shadow-[0_4px_16px_rgba(10,132,255,0.25)] flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                                     >
-                                        <span className="hidden sm:inline text-base">{t('viewOriginal')}</span> 
-                                        <ExternalLink className="w-6 h-6 sm:w-5 sm:h-5" />
+                                        <span className="hidden sm:inline text-sm">{t('viewOriginal')}</span> 
+                                        <ExternalLink className="w-5 h-5 sm:w-4 sm:h-4" />
                                     </a>
                                 </div>
 
-                                <div className="flex items-center gap-2 text-slate-400 mb-8 border-b border-slate-700 pb-6">
-                                    <MapPin className="w-4 h-4 text-blue-400" />
-                                    <span className="text-sm sm:text-base font-medium text-slate-300">{offer.location || t('locationNotSpecified')}</span>
+                                <div className="flex items-center gap-2 text-zinc-400 mb-6 border-b border-white/[0.08] pb-4">
+                                    <MapPin className="w-4 h-4 text-zinc-500" />
+                                    <span className="text-xs sm:text-sm font-medium text-zinc-300">{offer.location || t('locationNotSpecified')}</span>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6">
                                     {renderSpec(<Calendar className="w-4 h-4" />, "year", offer.year)}
                                     {renderSpec(<Gauge className="w-4 h-4" />, "mileage_label", offer.mileage ? `${offer.mileage}` : null)}
                                     {renderSpec(<Fuel className="w-4 h-4" />, "fuel", offer.fuel)}
                                     {renderSpec(<Settings className="w-4 h-4" />, "engine", offer.capacity)}
                                 </div>
 
-                                <div className="space-y-2 mb-8">
-                                    <h4 className="text-sm font-semibold text-slate-400 mb-3 uppercase tracking-wider">{t('additionalDetails')}</h4>
+                                <div className="space-y-2 mb-6">
+                                    <h4 className="text-xs font-medium text-zinc-400 mb-2.5 uppercase tracking-wider">{t('additionalDetails')}</h4>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         {renderSpec(<Car className="w-4 h-4" />, "bodyType", offer.body)}
                                         {renderSpec(<Settings className="w-4 h-4" />, "transmission", offer.transmission)}
@@ -338,7 +338,7 @@ const OfferDetails = ({ offer, onBack, t, onToggleFavorite }) => {
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col items-center gap-1 mt-4 text-xs text-slate-500">
+                                <div className="flex flex-col items-center gap-1 mt-4 text-[10px] text-zinc-500">
                                     <span>{t('publishedDate')}: {offer.date}</span>
                                     <span>{t('dataScrapedOn')}: {offer.created_at ? offer.created_at.slice(0, 10).replace(/-/g, '.') + ' ' + offer.created_at.slice(11, 16) : '-'}</span>
                                 </div>

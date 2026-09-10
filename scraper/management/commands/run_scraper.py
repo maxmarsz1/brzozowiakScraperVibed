@@ -238,50 +238,106 @@ def run_scraper():
         log("Database up to date.")
 
 
-def run_maintenance():
+def run_maintenance(limit=None):
     log("Running maintenance: checking for inactive offers...")
     # Get all non-archived offers
-    active_offers = Offer.objects.filter(is_archived=False)
+    active_offers = Offer.objects.exclude(is_archived=True).order_by('id')
     total = active_offers.count()
-    archived_count = 0
+    if limit:
+        active_offers = active_offers[:limit]
+        check_count = min(total, limit)
+    else:
+        check_count = total
     
-    log(f"Starting check for {total} active offers...")
+    archived_count = 0
+    log(f"Starting check for {check_count} active offers (total in DB: {total})...")
+    
+    session = requests.Session()
+    session.headers.update(HEADERS)
     
     for i, offer in enumerate(active_offers):
-        if (i + 1) % 50 == 0:
-            log(f"Progress: {i + 1}/{total} offers checked...")
+        if (i + 1) % 50 == 0 or (i + 1) == check_count:
+            log(f"Progress: {i + 1}/{check_count} offers checked... (Archived so far: {archived_count})")
             
         try:
             # Check if URL is still valid
-            response = requests.get(offer.url, headers=HEADERS, timeout=10)
+            response = session.get(offer.url, timeout=15)
             
-            # Brzozowiak often returns 200 but with "Nie znaleziono" text for deleted offers
-            # Or it might return 404
             is_gone = False
-            if response.status_code == 404:
+            # HTTP 404 or 410 Gone
+            if response.status_code in (404, 410):
                 is_gone = True
-            elif "ogłoszenie nie istnieje" in response.text.lower() or "nie znaleziono ogłoszenia" in response.text.lower():
-                is_gone = True
+            elif response.status_code == 200:
+                response.encoding = "utf-8"
+                bs = BeautifulSoup(response.text, features="html.parser")
+                offer_data = bs.find("div", class_="stdBxC")
+                
+                # Active offers on Brzozowiak always have <div class="stdBxC">.
+                # When deleted or expired, stdBxC is absent and Brzozowiak displays:
+                # "Ogłoszenie zostało usunięte przez ogłoszeniodawcę lub wygasło."
+                text_lower = response.text.lower()
+                has_gone_phrase = (
+                    "zostało usunięte" in text_lower or
+                    "wygasło" in text_lower or
+                    "ogłoszenie nie istnieje" in text_lower or
+                    "nie znaleziono ogłoszenia" in text_lower
+                )
+                
+                if not offer_data or has_gone_phrase:
+                    is_gone = True
+            elif response.status_code >= 500:
+                log(f"Server error ({response.status_code}) checking offer {offer.offer_id}, skipping...")
+                continue
                 
             if is_gone:
                 offer.is_archived = True
-                offer.save()
+                offer.save(update_fields=['is_archived', 'updated_at'])
                 archived_count += 1
-                log(f"Archived inactive offer: {offer.offer_id}")
+                log(f"Archived inactive offer: {offer.offer_id} ({offer.title})")
         except Exception as e:
             log(f"Error checking {offer.offer_id}: {e}")
             
         # Randomized user-like delays
         time.sleep(random.uniform(0.5, 1.5))
-        if i % 15 == 0:
-            time.sleep(random.uniform(2.0, 5.0)) # Occasional longer pause
+        if i > 0 and i % 15 == 0:
+            time.sleep(random.uniform(2.0, 4.0)) # Occasional longer pause
         
-    log(f"Maintenance complete. Total archived: {archived_count}")
+    log(f"Maintenance complete. Checked: {check_count}. Total archived: {archived_count}")
+    return archived_count
 
 class Command(BaseCommand):
     help = 'Runs the scraper every 1h +- rand 1-30min'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--maintenance',
+            action='store_true',
+            help='Run the maintenance check immediately to archive inactive offers',
+        )
+        parser.add_argument(
+            '--limit',
+            type=int,
+            default=None,
+            help='Limit the number of offers to check during maintenance',
+        )
+
     def handle(self, *args, **options):
+        if options.get('maintenance'):
+            limit = options.get('limit')
+            log(f"Manual maintenance run requested (limit={limit})...")
+            status, _ = ScraperStatus.objects.get_or_create(id=1)
+            status.is_running = True
+            status.save()
+            try:
+                run_maintenance(limit=limit)
+                status.last_maintenance_run = timezone.now()
+            except Exception as e:
+                log(f"Maintenance error: {e}")
+            finally:
+                status.is_running = False
+                status.save()
+            return
+
         log("Scraper started...")
         while True:
             now = timezone.localtime()
@@ -302,11 +358,14 @@ class Command(BaseCommand):
                 log(f"Maintenance window reached ({now.hour}:00). Starting maintenance...")
                 status.is_running = True
                 status.save()
+                success = False
                 try:
                     run_maintenance()
+                    success = True
                 except Exception as e:
                     log(f"Maintenance error: {e}")
-                status.last_maintenance_run = timezone.now()
+                if success:
+                    status.last_maintenance_run = timezone.now()
                 status.is_running = False
                 status.save()
                 log("Maintenance session finished.")

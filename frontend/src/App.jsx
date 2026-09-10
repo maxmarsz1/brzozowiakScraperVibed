@@ -60,72 +60,72 @@ const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode =
         <div ref={cardRef} onClick={() => onSelect(offer)} className="block group relative cursor-pointer">
             <button
                 onClick={handleToggleFavorite}
-                className="absolute top-3 right-3 z-20 p-2 bg-slate-900/60 hover:bg-slate-800/90 backdrop-blur rounded-full transition-all border border-slate-700 shadow-lg group/btn hover:scale-110"
+                className="absolute top-3 right-3 z-20 p-2.5 bg-black/40 hover:bg-black/60 backdrop-blur-xl rounded-full transition-all duration-200 border border-white/10 hover:border-white/20 shadow-lg group/btn hover:scale-105 active:scale-95"
                 title={offer.is_favorite ? t('removeFavorite') : t('addFavorite')}
             >
-                <Heart className={`w-5 h-5 transition-colors ${offer.is_favorite ? 'fill-rose-500 text-rose-500' : 'text-slate-400 group-hover/btn:text-rose-400'}`} />
+                <Heart className={`w-4 h-4 transition-colors ${offer.is_favorite ? 'fill-rose-500 text-rose-500' : 'text-white/60 group-hover/btn:text-rose-400'}`} />
             </button>
             {!isSeen && (
-                <div className="absolute top-0 left-0 z-10 -ml-2 -mt-2" title={t('newOffer')}>
-                    <span className="relative flex h-5 w-5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-5 w-5 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)] border-2 border-slate-900"></span>
+                <div className="absolute top-3 left-3 z-20" title={t('newOffer')}>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-[10px] font-semibold text-white tracking-wider shadow-sm">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                        {t('newOffer') || 'NEW'}
                     </span>
                 </div>
             )}
-            <div className={`glass-panel h-full overflow-hidden hover:border-blue-500/50 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-[0_10px_40px_-15px_rgba(59,130,246,0.3)] ${!isSeen ? 'border-emerald-500/30' : ''}`}>
-                <div className="h-64 sm:h-72 relative bg-slate-800/80 flex items-center justify-center overflow-hidden">
+            <div className="glass-card h-full overflow-hidden flex flex-col">
+                <div className="h-60 sm:h-64 relative bg-black/30 flex items-center justify-center overflow-hidden border-b border-white/[0.06]">
                     {offer.img && offer.img !== 'NULL' ? (
                         <>
                             {/* Blurred background fill */}
-                            <img src={offer.img} aria-hidden="true" className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-40 pointer-events-none" />
+                            <img src={offer.img} aria-hidden="true" className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-30 pointer-events-none" />
                             {/* Main image */}
-                            <img src={offer.img} alt={offer.title} className="relative w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-2xl" />
+                            <img src={offer.img} alt={offer.title} className="relative w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-xl" />
                         </>
                     ) : (
-                        <span className="text-slate-500">{t('noImage')}</span>
+                        <span className="text-zinc-500 text-xs font-medium">{t('noImage')}</span>
                     )}
                 </div>
 
-                <div className="p-5">
-                    <div className="mb-4">
-                        <h2 className="text-lg font-bold text-white mb-1 line-clamp-2 group-hover:text-blue-400 transition-colors leading-tight">{offer.title || t('unknownTitle')}</h2>
-                        <div className="flex flex-col gap-1">
-                            <div className="text-2xl font-black text-emerald-400 whitespace-nowrap">
+                <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                        <h2 className="text-base font-semibold text-white/95 mb-2 line-clamp-2 group-hover:text-white transition-colors leading-snug tracking-tight">{offer.title || t('unknownTitle')}</h2>
+                        <div className="flex flex-col gap-0.5 mb-4">
+                            <div className="text-xl sm:text-2xl font-bold text-white tracking-tight whitespace-nowrap">
                                 {offer.price ? formatPrice(offer.price) : t('askPrice')}
-                                {offer.price && <span className="text-base text-emerald-500/80 ml-1">PLN</span>}
+                                {offer.price && <span className="text-xs font-normal text-zinc-400 ml-1.5">PLN</span>}
                             </div>
-                            <p className="text-xs text-slate-400 flex items-center gap-1">
-                                <MapPin className="w-3 h-3" /> {offer.location || t('unknownLocation')}
+                            <p className="text-xs text-zinc-400 flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-zinc-500" /> {offer.location || t('unknownLocation')}
                             </p>
                         </div>
+
+                        <div className="grid grid-cols-2 gap-y-2 gap-x-3 text-xs bg-white/[0.02] p-3 rounded-xl border border-white/[0.04]">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] uppercase font-medium text-zinc-500 tracking-wider">{t('year')}</span>
+                                <span className="font-medium text-zinc-200">{offer.year || '-'}</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] uppercase font-medium text-zinc-500 tracking-wider">{t('mileage_label')}</span>
+                                <span className="font-medium text-zinc-200">{offer.mileage ? `${offer.mileage}` : '-'}</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] uppercase font-medium text-zinc-500 tracking-wider">{t('engine')}</span>
+                                <span className="font-medium text-zinc-200">{offer.capacity || '-'}</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] uppercase font-medium text-zinc-500 tracking-wider">{t('fuel')}</span>
+                                <span className="font-medium text-zinc-200">{offer.fuel || '-'}</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
-                        <div className="flex flex-col">
-                            <span className="text-slate-500">{t('year')}</span>
-                            <span className="font-semibold text-slate-200">{offer.year || '-'}</span>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-slate-500">{t('mileage_label')}</span>
-                            <span className="font-semibold text-slate-200">{offer.mileage ? `${offer.mileage}` : '-'}</span>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-slate-500">{t('engine')}</span>
-                            <span className="font-semibold text-slate-200">{offer.capacity || '-'}</span>
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-slate-500">{t('fuel')}</span>
-                            <span className="font-semibold text-slate-200">{offer.fuel || '-'}</span>
-                        </div>
-                    </div>
-
-                    <div className="mt-4 pt-4 border-t border-slate-700/50 flex flex-col gap-1 text-[10px] text-slate-500">
+                    <div className="mt-4 pt-3 border-t border-white/[0.06] flex flex-col gap-1 text-[10px] text-zinc-500">
                         <div className="flex justify-between">
                             <span>{t('published')}: {offer.date}</span>
                             <span>{t('id')}: {offer.offer_id}</span>
                         </div>
-                        <div className="flex justify-between border-t border-slate-800/30 pt-1">
+                        <div className="flex justify-between border-t border-white/[0.03] pt-1">
                             <span>{t('scraped')}: {offer.created_at ? offer.created_at.slice(0, 10).replace(/-/g, '.') + ' ' + offer.created_at.slice(11, 16) : '-'}</span>
                         </div>
                     </div>
@@ -138,7 +138,7 @@ const OfferCard = ({ offer, onSelect, t, showToast, onToggleFavorite, viewMode =
 // Factored out image with blur for reuse
 const BlurImage = ({ img, title, className }) => img && img !== 'NULL' ? (
     <>
-        <img src={img} aria-hidden="true" className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-40 pointer-events-none" />
+        <img src={img} aria-hidden="true" className="absolute inset-0 w-full h-full object-cover scale-110 blur-xl opacity-30 pointer-events-none" />
         <img src={img} alt={title} className={className} />
     </>
 ) : null;
@@ -147,50 +147,50 @@ const ListCard = ({ offer, onSelect, t, showToast, isSeen, isFavorite, handleTog
     <div ref={cardRef} onClick={() => onSelect(offer)} className="group relative cursor-pointer">
         <button
             onClick={handleToggleFavorite}
-            className="absolute top-3 right-3 z-20 p-2 bg-slate-900/60 hover:bg-slate-800/90 backdrop-blur rounded-full transition-all border border-slate-700 shadow-lg group/btn hover:scale-110"
+            className="absolute top-3 right-3 z-20 p-2.5 bg-black/40 hover:bg-black/60 backdrop-blur-xl rounded-full transition-all duration-200 border border-white/10 hover:border-white/20 shadow-md group/btn hover:scale-105 active:scale-95"
         >
-            <Heart className={`w-4 h-4 transition-colors ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-slate-400 group-hover/btn:text-rose-400'}`} />
+            <Heart className={`w-3.5 h-3.5 transition-colors ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-white/60 group-hover/btn:text-rose-400'}`} />
         </button>
         {!isSeen && (
-            <div className="absolute top-0 left-0 z-10 -ml-2 -mt-2">
-                <span className="relative flex h-4 w-4">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-slate-900"></span>
+            <div className="absolute top-2.5 left-2.5 z-20">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-[9px] font-semibold text-white tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                    {t('newOffer') || 'NEW'}
                 </span>
             </div>
         )}
-        <div className={`glass-panel overflow-hidden flex max-h-36 sm:max-h-52 hover:border-blue-500/50 transition-all duration-200 hover:shadow-[0_4px_20px_-5px_rgba(59,130,246,0.3)] ${!isSeen ? 'border-emerald-500/30' : ''}`}>
-            <div className="w-32 sm:w-64 shrink-0 self-stretch relative bg-slate-900/50 flex items-center justify-center overflow-hidden">
-                <BlurImage img={offer.img} title={offer.title} className="relative w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-2xl z-10" />
-                {(!offer.img || offer.img === 'NULL') && <span className="text-slate-500 text-[10px] sm:text-xs text-center px-2">{t('noImage')}</span>}
+        <div className="glass-card overflow-hidden flex max-h-36 sm:max-h-48">
+            <div className="w-32 sm:w-56 shrink-0 self-stretch relative bg-black/30 flex items-center justify-center overflow-hidden border-r border-white/[0.06]">
+                <BlurImage img={offer.img} title={offer.title} className="relative w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-xl z-10" />
+                {(!offer.img || offer.img === 'NULL') && <span className="text-zinc-500 text-[10px] sm:text-xs text-center px-2">{t('noImage')}</span>}
             </div>
-            <div className="flex-1 px-3 sm:px-6 py-2 sm:py-5 flex flex-col justify-between min-w-0">
+            <div className="flex-1 px-4 sm:px-6 py-3 sm:py-5 flex flex-col justify-between min-w-0">
                 <div>
-                    <h2 className="text-sm font-bold text-white line-clamp-1 group-hover:text-blue-400 transition-colors">{offer.title || 'Unknown Title'}</h2>
+                    <h2 className="text-sm sm:text-base font-semibold text-white/95 line-clamp-1 group-hover:text-white transition-colors tracking-tight">{offer.title || 'Unknown Title'}</h2>
                     {/* Price on mobile only */}
-                    <div className="sm:hidden text-emerald-400 font-black text-xs mt-0.5">
+                    <div className="sm:hidden text-white font-bold text-xs mt-0.5 tracking-tight">
                         {offer.price ? formatPrice(offer.price) : t('askPrice')}
-                        {offer.price && <span className="text-[10px] text-emerald-500/80 ml-0.5">PLN</span>}
+                        {offer.price && <span className="text-[10px] font-normal text-zinc-400 ml-1">PLN</span>}
                     </div>
-                    <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5 min-w-0">
-                        <MapPin className="w-3 h-3 shrink-0" /> <span className="truncate">{offer.location || 'Unknown Location'}</span>
+                    <p className="text-[10px] sm:text-xs text-zinc-400 flex items-center gap-1 mt-0.5 min-w-0">
+                        <MapPin className="w-3 h-3 shrink-0 text-zinc-500" /> <span className="truncate">{offer.location || 'Unknown Location'}</span>
                     </p>
                 </div>
-                <div className="flex flex-wrap gap-x-2 sm:gap-x-4 gap-y-0.5 text-[10px] sm:text-xs mt-1 sm:mt-2">
-                    {offer.year && <span className="text-slate-400"><span className="hidden sm:inline">{t('year')}: </span><span className="font-semibold text-slate-200">{offer.year}</span></span>}
-                    {offer.mileage && <span className="text-slate-400"><span className="hidden sm:inline">{t('mileage_label')}: </span><span className="font-semibold text-slate-200">{offer.mileage}</span></span>}
-                    {offer.fuel && <span className="text-slate-400"><span className="hidden sm:inline">{t('fuel')}: </span><span className="font-semibold text-slate-200">{offer.fuel}</span></span>}
+                <div className="flex flex-wrap gap-x-3 sm:gap-x-5 gap-y-0.5 text-[10px] sm:text-xs mt-1 sm:mt-2">
+                    {offer.year && <span className="text-zinc-400"><span className="hidden sm:inline">{t('year')}: </span><span className="font-medium text-zinc-200">{offer.year}</span></span>}
+                    {offer.mileage && <span className="text-zinc-400"><span className="hidden sm:inline">{t('mileage_label')}: </span><span className="font-medium text-zinc-200">{offer.mileage}</span></span>}
+                    {offer.fuel && <span className="text-zinc-400"><span className="hidden sm:inline">{t('fuel')}: </span><span className="font-medium text-zinc-200">{offer.fuel}</span></span>}
                 </div>
-                <div className="mt-auto pt-2 flex flex-col gap-0.5 text-[10px] text-slate-500">
+                <div className="mt-auto pt-2 flex flex-col gap-0.5 text-[10px] text-zinc-500 border-t border-white/[0.04]">
                     <span>{t('published')}: {offer.date}</span>
                     <span>{t('scraped')}: {offer.created_at ? offer.created_at.slice(0, 10).replace(/-/g, '.') + ' ' + offer.created_at.slice(11, 16) : '-'}</span>
                 </div>
             </div>
-            <div className="hidden sm:flex shrink-0 items-center pr-10 sm:pr-14 pl-2 sm:pl-4 border-l border-slate-700/50">
+            <div className="hidden sm:flex shrink-0 items-center pr-10 sm:pr-14 pl-3 sm:pl-5 border-l border-white/[0.06]">
                 <div className="text-right">
-                    <div className="text-sm sm:text-lg font-black text-emerald-400 whitespace-nowrap">
+                    <div className="text-lg sm:text-xl font-bold text-white tracking-tight whitespace-nowrap">
                         {offer.price ? formatPrice(offer.price) : t('askPrice')}
-                        {offer.price && <span className="text-[10px] sm:text-xs text-emerald-500/80 ml-0.5 sm:ml-1">PLN</span>}
+                        {offer.price && <span className="text-xs font-normal text-zinc-400 ml-1">PLN</span>}
                     </div>
                 </div>
             </div>
@@ -205,17 +205,12 @@ const Toast = ({ message, type = 'success', onClose }) => {
     }, [onClose]);
 
     return (
-        <div className="fixed bottom-6 right-6 z-[300] animate-in slide-in-from-right-10 duration-300">
-            <div className={`flex items-center gap-3 px-5 py-4 rounded-2xl border-2 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl ${type === 'success'
-                ? 'bg-slate-900 border-emerald-500/40 text-emerald-400'
-                : 'bg-slate-900 border-blue-500/40 text-blue-400'
-                }`}>
-                <div className={`p-1.5 rounded-full ${type === 'success' ? 'bg-emerald-500/10' : 'bg-blue-500/10'}`}>
-                    {type === 'success' ? <Check className="w-5 h-5" /> : <Info className="w-5 h-5" />}
-                </div>
-                <span className="text-sm font-black tracking-wide">{message}</span>
-                <button onClick={onClose} className="ml-4 p-1 hover:bg-white/10 rounded-lg transition-colors text-slate-500 hover:text-white">
-                    <X className="w-4 h-4" />
+        <div className="fixed bottom-6 right-6 z-[300] animate-in slide-in-from-bottom-4 fade-in duration-300">
+            <div className="flex items-center gap-3 px-5 py-3 rounded-full border border-white/15 bg-zinc-900/85 backdrop-blur-2xl shadow-2xl shadow-black/80 text-white">
+                <div className={`w-2 h-2 rounded-full ${type === 'success' ? 'bg-[#30d158]' : 'bg-[#0071e3]'}`} />
+                <span className="text-xs font-medium tracking-tight text-white/90">{message}</span>
+                <button onClick={onClose} className="ml-2 p-1 hover:bg-white/10 rounded-full transition-colors text-white/40 hover:text-white cursor-pointer">
+                    <X className="w-3.5 h-3.5" />
                 </button>
             </div>
         </div>
@@ -232,12 +227,15 @@ const SaveSearchModal = ({ onSave, onClose, t }) => {
     }, []);
 
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-                <h3 className="text-xl font-bold text-white mb-4">{t('saveSearch')}</h3>
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-in fade-in duration-200" onClick={onClose}>
+            <div 
+                onClick={(e) => e.stopPropagation()} 
+                className="glass-panel bg-zinc-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200"
+            >
+                <h3 className="text-xl font-semibold text-white mb-4 tracking-tight">{t('saveSearch')}</h3>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-2">{t('searchName')}</label>
+                        <label className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wide">{t('searchName')}</label>
                         <input
                             ref={inputRef}
                             autoFocus
@@ -245,12 +243,12 @@ const SaveSearchModal = ({ onSave, onClose, t }) => {
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="e.g. My Dream Audi"
-                            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-all shadow-inner"
+                            className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] focus:ring-1 focus:ring-white/20 transition-all"
                             onKeyDown={(e) => e.key === 'Enter' && name.trim() && onSave(name, telegramNotifications)}
                         />
                     </div>
 
-                    <div className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                    <div className="flex items-center gap-3 p-3.5 bg-white/[0.03] rounded-2xl border border-white/[0.06]">
                         <label className="relative inline-flex items-center cursor-pointer">
                             <input
                                 type="checkbox"
@@ -258,10 +256,10 @@ const SaveSearchModal = ({ onSave, onClose, t }) => {
                                 onChange={(e) => setTelegramNotifications(e.target.checked)}
                                 className="sr-only peer"
                             />
-                            <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            <div className="w-11 h-6 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0071e3]"></div>
                         </label>
-                        <div className="flex items-center gap-2 text-sm text-slate-300">
-                            <Send className="w-4 h-4 text-blue-400" />
+                        <div className="flex items-center gap-2 text-xs font-medium text-zinc-300">
+                            <Send className="w-4 h-4 text-zinc-400" />
                             <span>{t('telegramNotifications') || 'Telegram Notifications'}</span>
                         </div>
                     </div>
@@ -270,14 +268,14 @@ const SaveSearchModal = ({ onSave, onClose, t }) => {
                 <div className="flex gap-3 mt-8">
                     <button
                         onClick={onClose}
-                        className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold transition-all border border-slate-700"
+                        className="flex-1 px-4 py-3 bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white rounded-xl font-medium text-sm transition-all border border-white/10 cursor-pointer"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={() => onSave(name, telegramNotifications)}
                         disabled={!name.trim()}
-                        className="flex-2 px-8 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-900/20"
+                        className="flex-2 px-8 py-3 bg-[#0a84ff] hover:bg-[#0071e3] text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-xl font-medium text-sm transition-all shadow-[0_4px_16px_rgba(10,132,255,0.25)] border border-blue-400/30 active:scale-[0.98] cursor-pointer"
                     >
                         {t('saveSearch')}
                     </button>
@@ -289,27 +287,30 @@ const SaveSearchModal = ({ onSave, onClose, t }) => {
 
 const LogsModal = ({ logs, onClose, t }) => {
     return (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
-            <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl h-[70vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
-                <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
-                    <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                        <Info className="text-blue-400 w-5 h-5" /> Scraper Logs
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xl animate-in fade-in duration-300" onClick={onClose}>
+            <div 
+                onClick={(e) => e.stopPropagation()} 
+                className="glass-panel bg-zinc-900/85 backdrop-blur-2xl border border-white/10 rounded-3xl w-full max-w-2xl h-[70vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden"
+            >
+                <div className="p-5 border-b border-white/[0.08] flex justify-between items-center bg-zinc-900/40">
+                    <h3 className="text-lg font-semibold text-white flex items-center gap-3 tracking-tight">
+                        <Info className="text-zinc-400 w-5 h-5" /> Scraper Logs
                     </h3>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
-                        <X className="w-6 h-6" />
+                    <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors cursor-pointer">
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar font-mono text-[10px] space-y-1 bg-slate-950/50">
+                <div className="flex-1 overflow-y-auto p-5 custom-scrollbar font-mono text-[11px] space-y-1.5 bg-black/30">
                     {logs.map((log, i) => (
-                        <div key={log.id || i} className="flex gap-3 py-1 border-b border-slate-900/50 last:border-0 group">
-                            <span className="text-slate-600 shrink-0">{new Date(log.timestamp).toLocaleTimeString()}</span>
-                            <span className="text-slate-300 break-words group-hover:text-white transition-colors">{log.message}</span>
+                        <div key={log.id || i} className="flex gap-3 py-1 border-b border-white/[0.04] last:border-0 group">
+                            <span className="text-zinc-500 shrink-0">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                            <span className="text-zinc-300 break-words group-hover:text-white transition-colors">{log.message}</span>
                         </div>
                     ))}
-                    {logs.length === 0 && <div className="text-center py-12 text-slate-600 italic">No logs yet...</div>}
+                    {logs.length === 0 && <div className="text-center py-12 text-zinc-500 italic">No logs yet...</div>}
                 </div>
-                <div className="p-4 border-t border-slate-800 flex justify-end">
-                    <button onClick={onClose} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all border border-slate-700">Close</button>
+                <div className="p-4 border-t border-white/[0.08] flex justify-end bg-zinc-900/40">
+                    <button onClick={onClose} className="px-5 py-2 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-medium transition-all border border-white/10 cursor-pointer">Close</button>
                 </div>
             </div>
         </div>
@@ -365,6 +366,7 @@ function App() {
     const [mileageMax, setMileageMax] = useState("");
     const [publishedAfter, setPublishedAfter] = useState("");
     const [publishedBefore, setPublishedBefore] = useState("");
+    const [withinPeriod, setWithinPeriod] = useState(null);
 
     const [savedSearches, setSavedSearches] = useState([]);
     const [scraperStatus, setScraperStatus] = useState(null);
@@ -382,69 +384,44 @@ function App() {
 
     const renderFilters = () => (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
-            <div className="flex flex-wrap gap-3 sm:col-span-full pb-4 border-b border-slate-700/50 mb-2">
-                <button
-                    onClick={() => setOnlyNew(!onlyNew)}
-                    className={`px-3 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${onlyNew
-                        ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-[0_0_20px_-5px_rgba(16,185,129,0.3)]'
-                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
-                        }`}
-                >
-                    <div className={`w-1.5 h-1.5 rounded-full ${onlyNew ? 'bg-emerald-400 animate-pulse' : 'bg-slate-600'}`}></div>
-                    {t('onlyNew')}
-                </button>
-
-                <button
-                    onClick={() => setOnlyWithPrice(!onlyWithPrice)}
-                    className={`px-3 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${onlyWithPrice
-                        ? 'bg-amber-500/10 border-amber-500 text-amber-400 shadow-[0_0_20px_-5px_rgba(245,158,11,0.3)]'
-                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
-                        }`}
-                >
-                    <div className={`w-1.5 h-1.5 rounded-full ${onlyWithPrice ? 'bg-amber-400' : 'bg-slate-600'}`}></div>
-                    {t('hideWithoutPrice')}
-                </button>
-
-                <button
-                    onClick={() => setExcludeBullshit(!excludeBullshit)}
-                    className={`px-3 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${excludeBullshit
-                        ? 'bg-orange-500/10 border-orange-500 text-orange-400 shadow-[0_0_20px_-5px_rgba(249,115,22,0.3)]'
-                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
-                        }`}
-                >
-                    <div className={`w-1.5 h-1.5 rounded-full ${excludeBullshit ? 'bg-orange-400' : 'bg-slate-600'}`}></div>
-                    {t('hideBullshit')}
-                </button>
-
-                <button
-                    onClick={() => setShowArchived(!showArchived)}
-                    className={`px-3 py-2 rounded-xl border text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${showArchived
-                        ? 'bg-violet-500/10 border-violet-500 text-violet-400 shadow-[0_0_20px_-5px_rgba(139,92,246,0.3)]'
-                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
-                        }`}
-                >
-                    <div className={`w-1.5 h-1.5 rounded-full ${showArchived ? 'bg-violet-400' : 'bg-slate-600'}`}></div>
-                    {t('showArchived')}
-                </button>
+            <div className="flex flex-wrap gap-2 sm:col-span-full pb-4 border-b border-white/[0.06] mb-1">
+                {[
+                    { active: onlyNew, toggle: () => setOnlyNew(!onlyNew), label: t('onlyNew') },
+                    { active: onlyWithPrice, toggle: () => setOnlyWithPrice(!onlyWithPrice), label: t('hideWithoutPrice') },
+                    { active: excludeBullshit, toggle: () => setExcludeBullshit(!excludeBullshit), label: t('hideBullshit') },
+                    { active: showArchived, toggle: () => setShowArchived(!showArchived), label: t('showArchived') },
+                ].map((item, idx) => (
+                    <button
+                        key={idx}
+                        onClick={item.toggle}
+                        className={`px-3.5 py-1.5 rounded-full border text-xs font-medium tracking-tight transition-all duration-200 flex items-center gap-2 cursor-pointer ${item.active
+                            ? 'bg-white/20 text-white border-white/30 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.25)] font-semibold'
+                            : 'bg-white/[0.04] border-white/10 text-zinc-400 hover:text-white hover:bg-white/[0.08] hover:border-white/20'
+                            }`}
+                    >
+                        <span className={`w-1.5 h-1.5 rounded-full ${item.active ? 'bg-blue-400' : 'bg-zinc-600'}`} />
+                        {item.label}
+                    </button>
+                ))}
             </div>
 
             <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">{t('search')}</label>
+                <label className="block text-[11px] font-medium text-zinc-400 mb-1.5 tracking-wide uppercase">{t('search')}</label>
                 <input
                     type="text"
                     placeholder={t('keywords')}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] focus:ring-1 focus:ring-white/20 transition-all"
                 />
             </div>
 
             <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">{t('sortBy')}</label>
+                <label className="block text-[11px] font-medium text-zinc-400 mb-1.5 tracking-wide uppercase">{t('sortBy')}</label>
                 <select
                     value={ordering}
                     onChange={(e) => setOrdering(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                    className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-white/30 transition-all cursor-pointer"
                 >
                     <option value="-created_at">{t('newestAdded')}</option>
                     <option value="created_at">{t('oldestAdded')}</option>
@@ -459,19 +436,19 @@ function App() {
             </div>
 
             <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">{t('brand')}</label>
+                <label className="block text-[11px] font-medium text-zinc-400 mb-1.5 tracking-wide uppercase">{t('brand')}</label>
                 <input
                     type="text"
                     placeholder="e.g. Audi, BMW"
                     value={brandFilter}
                     onChange={(e) => setBrandFilter(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] focus:ring-1 focus:ring-white/20 transition-all"
                 />
             </div>
 
             <div className="sm:col-span-2 lg:col-span-1 lg:col-start-4 lg:row-span-2 self-start">
-                <label className="block text-xs font-medium text-slate-400 mb-2">{t('fuelType')}</label>
-                <div className="flex flex-wrap gap-2">
+                <label className="block text-[11px] font-medium text-zinc-400 mb-1.5 tracking-wide uppercase">{t('fuelType')}</label>
+                <div className="flex flex-wrap gap-1.5">
                     {[
                         { id: 'Benzyna', label: 'Benzyna' },
                         { id: 'Olej Napędowy', label: lang === 'pl' ? 'Diesel' : 'Diesel' },
@@ -492,10 +469,10 @@ function App() {
                                         : [...prev, f.id]
                                     );
                                 }}
-                                className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold uppercase tracking-tight transition-all ${
+                                className={`px-3 py-1 rounded-full border text-xs font-medium tracking-tight transition-all cursor-pointer ${
                                     isActive
-                                    ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_10px_rgba(37,99,235,0.3)]'
-                                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
+                                    ? 'bg-white/20 text-white border-white/30 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.25)] font-semibold'
+                                    : 'bg-white/[0.04] border-white/10 text-zinc-400 hover:text-white hover:bg-white/[0.08]'
                                 }`}
                             >
                                 {f.label}
@@ -505,7 +482,7 @@ function App() {
                     {fuelFilter.length > 0 && (
                         <button 
                             onClick={() => { setPage(1); setFuelFilter([]); }}
-                            className="px-2 py-1.5 text-[10px] font-bold text-rose-400 hover:text-rose-300 underline underline-offset-4"
+                            className="px-2 py-1 text-xs font-medium text-zinc-400 hover:text-white underline cursor-pointer"
                         >
                             {lang === 'pl' ? 'Wyczyść' : 'Clear'}
                         </button>
@@ -514,105 +491,113 @@ function App() {
             </div>
 
             <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">{t('price')}</label>
+                <label className="block text-[11px] font-medium text-zinc-400 mb-1.5 tracking-wide uppercase">{t('price')}</label>
                 <div className="flex gap-2">
                     <input
                         type="number"
                         placeholder={lang === 'pl' ? 'Od' : 'From'}
                         value={priceMin}
                         onChange={(e) => setPage(1) || setPriceMin(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                        className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] focus:ring-1 focus:ring-white/20 transition-all"
                     />
                     <input
                         type="number"
                         placeholder={lang === 'pl' ? 'Do' : 'To'}
                         value={priceMax}
                         onChange={(e) => setPage(1) || setPriceMax(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                        className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] focus:ring-1 focus:ring-white/20 transition-all"
                     />
                 </div>
             </div>
 
             <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">{t('mileage')}</label>
+                <label className="block text-[11px] font-medium text-zinc-400 mb-1.5 tracking-wide uppercase">{t('mileage')}</label>
                 <div className="flex gap-2">
                     <input
                         type="number"
                         placeholder={lang === 'pl' ? 'Od' : 'From'}
                         value={mileageMin}
                         onChange={(e) => setPage(1) || setMileageMin(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                        className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] focus:ring-1 focus:ring-white/20 transition-all"
                     />
                     <input
                         type="number"
                         placeholder={lang === 'pl' ? 'Do' : 'To'}
                         value={mileageMax}
                         onChange={(e) => setPage(1) || setMileageMax(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                        className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] focus:ring-1 focus:ring-white/20 transition-all"
                     />
                 </div>
             </div>
 
             <div>
-                <label className="block text-xs font-medium text-slate-400 mb-1">{t('productionYear')}</label>
+                <label className="block text-[11px] font-medium text-zinc-400 mb-1.5 tracking-wide uppercase">{t('productionYear')}</label>
                 <div className="flex gap-2">
                     <input
                         type="number"
                         placeholder={lang === 'pl' ? 'Od' : 'From'}
                         value={yearMin}
                         onChange={(e) => setPage(1) || setYearMin(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                        className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] focus:ring-1 focus:ring-white/20 transition-all"
                     />
                     <input
                         type="number"
                         placeholder={lang === 'pl' ? 'Do' : 'To'}
                         value={yearMax}
                         onChange={(e) => setPage(1) || setYearMax(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                        className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.07] focus:ring-1 focus:ring-white/20 transition-all"
                     />
                 </div>
             </div>
 
             {/* Published Date Range + Quick Presets — full width */}
-            <div className="sm:col-span-full pt-2 border-t border-slate-700/50 mt-2">
+            <div className="sm:col-span-full pt-3 border-t border-white/[0.06] mt-1">
                 <div className="flex flex-row flex-wrap gap-3 items-end">
-                    <div className="flex-1">
-                        <label className="block text-xs font-medium text-slate-400 mb-1">{t('publishedFrom')}</label>
+                    <div className="flex-1 min-w-[140px]">
+                        <label className="block text-[11px] font-medium text-zinc-400 mb-1.5 tracking-wide uppercase">{t('publishedFrom')}</label>
                         <input
                             type="date"
                             value={publishedAfter.replace(/\./g, '-')}
-                            onChange={(e) => setPublishedAfter(e.target.value.replace(/-/g, '.'))}
-                            className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all [color-scheme:dark]"
+                            onChange={(e) => {
+                                setWithinPeriod(null);
+                                setPublishedAfter(e.target.value.replace(/-/g, '.'));
+                            }}
+                            className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-white/30 focus:bg-white/[0.07] focus:ring-1 focus:ring-white/20 transition-all [color-scheme:dark]"
                         />
                     </div>
-                    <div className="flex-1">
-                        <label className="block text-xs font-medium text-slate-400 mb-1">{t('publishedTo')}</label>
+                    <div className="flex-1 min-w-[140px]">
+                        <label className="block text-[11px] font-medium text-zinc-400 mb-1.5 tracking-wide uppercase">{t('publishedTo')}</label>
                         <input
                             type="date"
                             value={publishedBefore.replace(/\./g, '-')}
-                            onChange={(e) => setPublishedBefore(e.target.value.replace(/-/g, '.'))}
-                            className="w-full bg-slate-800 border border-slate-600 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all [color-scheme:dark]"
+                            onChange={(e) => {
+                                setWithinPeriod(null);
+                                setPublishedBefore(e.target.value.replace(/-/g, '.'));
+                            }}
+                            className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-white/30 focus:bg-white/[0.07] focus:ring-1 focus:ring-white/20 transition-all [color-scheme:dark]"
                         />
                     </div>
-                    <div className="flex gap-1.5 flex-wrap shrink-0 pb-0.5">
-                        <span className="text-xs text-slate-500 w-full sm:w-auto self-center whitespace-nowrap">{t('within')}:</span>
+                    <div className="flex gap-1.5 flex-wrap shrink-0 pb-0.5 items-center">
+                        <span className="text-xs text-zinc-400 self-center whitespace-nowrap mr-1">{t('within')}:</span>
                         {DATE_PRESETS.map(({ label, days }) => {
                             const val = getPublishedAfterDate(days);
-                            const isActive = publishedAfter === val && !publishedBefore;
+                            const isActive = withinPeriod === label || (!withinPeriod && publishedAfter === val && !publishedBefore);
                             return (
                                 <button
                                     key={label}
                                     onClick={() => {
                                         if (isActive) {
+                                            setWithinPeriod(null);
                                             setPublishedAfter('');
                                         } else {
+                                            setWithinPeriod(label);
                                             setPublishedAfter(val);
                                             setPublishedBefore('');
                                         }
                                     }}
-                                    className={`px-2.5 py-1.5 rounded-md text-xs font-semibold border transition-all ${isActive
-                                        ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_10px_rgba(59,130,246,0.4)]'
-                                        : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-blue-500 hover:text-white'
+                                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-all cursor-pointer ${isActive
+                                        ? 'bg-white/20 text-white border-white/30 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.25)] font-semibold'
+                                        : 'bg-white/[0.04] border-white/10 text-zinc-400 hover:text-white hover:border-white/20'
                                         }`}
                                 >
                                     {label}
@@ -623,25 +608,25 @@ function App() {
                 </div>
             </div>
 
-            {/* Bottom Buttons — 50/50 full width */}
-            <div className="sm:col-span-full grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+            {/* Bottom Buttons — full width */}
+            <div className="sm:col-span-full grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
                 <button
                     onClick={clearFilters}
-                    className="py-2.5 bg-slate-700 hover:bg-slate-600 text-sm font-medium rounded-lg transition-colors cursor-pointer border border-slate-600"
+                    className="py-2.5 px-4 bg-white/[0.04] hover:bg-white/[0.08] text-zinc-400 hover:text-white text-xs font-medium rounded-xl border border-white/10 transition-all cursor-pointer"
                 >
                     {t('clearFilters')}
                 </button>
                 <button
                     onClick={saveAsDefault}
-                    className="py-2.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 text-sm font-bold rounded-lg transition-colors cursor-pointer flex justify-center items-center gap-2"
+                    className="py-2.5 px-4 bg-white/[0.06] hover:bg-white/[0.1] text-zinc-200 hover:text-white text-xs font-medium rounded-xl border border-white/10 transition-all cursor-pointer flex justify-center items-center gap-2"
                 >
-                    <Save className="w-4 h-4" /> {t('saveAsDefault')}
+                    <Save className="w-4 h-4 text-zinc-400" /> {t('saveAsDefault')}
                 </button>
                 <button
                     onClick={() => setShowSaveModal(true)}
-                    className="py-2.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 text-sm font-bold rounded-lg transition-colors cursor-pointer flex justify-center items-center gap-2"
+                    className="py-2.5 px-4 bg-[#0a84ff] hover:bg-[#0071e3] text-white text-xs font-medium rounded-xl border border-blue-400/30 transition-all shadow-[0_4px_16px_rgba(10,132,255,0.25)] cursor-pointer flex justify-center items-center gap-2"
                 >
-                    <Bookmark className="w-4 h-4" /> {t('saveSearch')}
+                    <Bookmark className="w-4 h-4 text-white" /> {t('saveSearch')}
                 </button>
             </div>
         </div>
@@ -670,27 +655,30 @@ function App() {
             }
 
             url += `&page=${fetchPage}`;
-            if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
-            if (brandFilter) url += `&brand=${encodeURIComponent(brandFilter)}`;
-            if (fuelFilter.length > 0) url += `&fuel=${encodeURIComponent(fuelFilter.join(','))}`;
-            if (debouncedYearMin) url += `&year_min=${encodeURIComponent(debouncedYearMin)}`;
-            if (debouncedYearMax) url += `&year_max=${encodeURIComponent(debouncedYearMax)}`;
+            if (onlyFavorites) {
+                url += `&is_favorite=true`;
+            } else {
+                if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
+                if (brandFilter) url += `&brand=${encodeURIComponent(brandFilter)}`;
+                if (fuelFilter.length > 0) url += `&fuel=${encodeURIComponent(fuelFilter.join(','))}`;
+                if (debouncedYearMin) url += `&year_min=${encodeURIComponent(debouncedYearMin)}`;
+                if (debouncedYearMax) url += `&year_max=${encodeURIComponent(debouncedYearMax)}`;
 
-            if (excludeBullshit) {
-                const effectiveMin = Math.max(parseInt(debouncedPriceMin) || 0, 500);
-                url += `&price_min=${effectiveMin}`;
-            } else if (debouncedPriceMin) {
-                url += `&price_min=${encodeURIComponent(debouncedPriceMin)}`;
+                if (excludeBullshit) {
+                    const effectiveMin = Math.max(parseInt(debouncedPriceMin) || 0, 500);
+                    url += `&price_min=${effectiveMin}`;
+                } else if (debouncedPriceMin) {
+                    url += `&price_min=${encodeURIComponent(debouncedPriceMin)}`;
+                }
+                if (debouncedPriceMax) url += `&price_max=${encodeURIComponent(debouncedPriceMax)}`;
+                if (debouncedMileageMin) url += `&mileage_min=${encodeURIComponent(debouncedMileageMin)}`;
+                if (debouncedMileageMax) url += `&mileage_max=${encodeURIComponent(debouncedMileageMax)}`;
+                if (onlyNew) url += `&is_seen=false`;
+                if (onlyWithPrice) url += `&has_price=true`;
+                if (showArchived) url += `&is_archived=true`;
+                if (publishedAfter) url += `&published_after=${encodeURIComponent(publishedAfter)}`;
+                if (publishedBefore) url += `&published_before=${encodeURIComponent(publishedBefore)}`;
             }
-            if (debouncedPriceMax) url += `&price_max=${encodeURIComponent(debouncedPriceMax)}`;
-            if (debouncedMileageMin) url += `&mileage_min=${encodeURIComponent(debouncedMileageMin)}`;
-            if (debouncedMileageMax) url += `&mileage_max=${encodeURIComponent(debouncedMileageMax)}`;
-            if (onlyNew) url += `&is_seen=false`;
-            if (onlyFavorites) url += `&is_favorite=true`;
-            if (onlyWithPrice) url += `&has_price=true`;
-            if (showArchived) url += `&is_archived=true`;
-            if (publishedAfter) url += `&published_after=${encodeURIComponent(publishedAfter)}`;
-            if (publishedBefore) url += `&published_before=${encodeURIComponent(publishedBefore)}`;
 
             const response = await fetch(url);
             const result = await response.json();
@@ -880,6 +868,7 @@ function App() {
         setPageAnchors({ 1: null });
         setShowArchived(false);
         setExcludeBullshit(false);
+        setWithinPeriod(null);
         setPublishedAfter('');
         setPublishedBefore('');
     };
@@ -928,8 +917,12 @@ function App() {
         if (onlyFavorites) params.append('is_favorite', 'true');
         if (onlyWithPrice) params.append('has_price', 'true');
         if (showArchived) params.append('is_archived', 'true');
-        if (publishedAfter) params.append('published_after', publishedAfter);
-        if (publishedBefore) params.append('published_before', publishedBefore);
+        if (withinPeriod) {
+            params.append('period', withinPeriod);
+        } else {
+            if (publishedAfter) params.append('published_after', publishedAfter);
+            if (publishedBefore) params.append('published_before', publishedBefore);
+        }
 
         try {
             await fetch(`${API_BASE_URL}/api/saved_searches/`, {
@@ -1015,8 +1008,12 @@ function App() {
         if (onlyFavorites) params.append('is_favorite', 'true');
         if (onlyWithPrice) params.append('has_price', 'true');
         if (showArchived) params.append('is_archived', 'true');
-        if (publishedAfter) params.append('published_after', publishedAfter);
-        if (publishedBefore) params.append('published_before', publishedBefore);
+        if (withinPeriod) {
+            params.append('period', withinPeriod);
+        } else {
+            if (publishedAfter) params.append('published_after', publishedAfter);
+            if (publishedBefore) params.append('published_before', publishedBefore);
+        }
 
         localStorage.setItem('default_filters', params.toString());
         showToast(t('defaultFiltersSaved'), 'info');
@@ -1039,8 +1036,34 @@ function App() {
         setOnlyWithPrice(params.get('has_price') === 'true');
         setShowArchived(params.get('is_archived') === 'true');
         setExcludeBullshit(params.get('price_min') === '500');
-        setPublishedAfter(params.get('published_after') || "");
-        setPublishedBefore(params.get('published_before') || "");
+
+        const periodParam = params.get('period') || params.get('within_days');
+        if (periodParam) {
+            const preset = DATE_PRESETS.find(p =>
+                p.label.toLowerCase() === periodParam.toLowerCase() ||
+                p.days.toString() === periodParam
+            );
+            if (preset) {
+                setWithinPeriod(preset.label);
+                setPublishedAfter(getPublishedAfterDate(preset.days));
+                setPublishedBefore('');
+            } else {
+                const days = parseInt(periodParam, 10);
+                if (!isNaN(days)) {
+                    setWithinPeriod(`${days}D`);
+                    setPublishedAfter(getPublishedAfterDate(days));
+                    setPublishedBefore('');
+                } else {
+                    setWithinPeriod(null);
+                    setPublishedAfter('');
+                    setPublishedBefore('');
+                }
+            }
+        } else {
+            setWithinPeriod(null);
+            setPublishedAfter(params.get('published_after') || "");
+            setPublishedBefore(params.get('published_before') || "");
+        }
         setPage(1);
         setShowSavedDrawer(false);
     };
@@ -1086,41 +1109,41 @@ function App() {
                 />
             )}
             <div className="min-h-screen p-4 md:p-6 custom-scrollbar">
-                <header className="mb-4 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-end border-b border-slate-700 pb-6 gap-6">
-                    <div className="flex flex-col gap-1">
+                <header className="mb-6 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/[0.08] pb-6 gap-6">
+                    <div className="flex flex-col gap-1.5">
                         <div className="flex items-center justify-between md:justify-start gap-4 w-full md:w-auto">
-                            <h1 className="text-2xl sm:text-4xl font-extrabold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-white flex items-center gap-2.5">
                                 {t('title')}
                             </h1>
-                            <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700 scale-90">
+                            <div className="flex bg-white/[0.06] rounded-full p-0.5 border border-white/10">
                                 <button
                                     onClick={() => setLang('pl')}
-                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${lang === 'pl' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+                                    className={`px-3 py-1 rounded-full text-[11px] transition-all cursor-pointer ${lang === 'pl' ? 'bg-white/20 text-white border border-white/25 shadow-sm font-semibold' : 'text-zinc-400 hover:text-white font-medium'}`}
                                 >
                                     PL
                                 </button>
                                 <button
                                     onClick={() => setLang('en')}
-                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${lang === 'en' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
+                                    className={`px-3 py-1 rounded-full text-[11px] transition-all cursor-pointer ${lang === 'en' ? 'bg-white/20 text-white border border-white/25 shadow-sm font-semibold' : 'text-zinc-400 hover:text-white font-medium'}`}
                                 >
                                     EN
                                 </button>
                             </div>
                         </div>
-                        <div className="text-slate-400 text-sm flex flex-col md:flex-row md:items-center gap-1 sm:gap-2">
+                        <div className="text-zinc-400 text-xs sm:text-sm flex flex-col md:flex-row md:items-center gap-2">
                             <span>{t('subtitle')}</span>
                             {scraperStatus && (
-                                <div className="flex items-center gap-1.5 md:ml-2 md:pl-3 md:border-l border-slate-700/50">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${(scraperStatus.is_running || isTriggering) ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-slate-500'}`}></span>
-                                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">
+                                <div className="flex items-center gap-2 md:ml-2 md:pl-3 md:border-l border-white/10">
+                                    <span className={`w-2 h-2 rounded-full ${(scraperStatus.is_running || isTriggering) ? 'bg-[#30d158] animate-pulse' : 'bg-zinc-600'}`}></span>
+                                    <span className="text-xs text-zinc-400 font-medium">
                                         {(scraperStatus.is_running || isTriggering) ? (
-                                            <span className="text-emerald-400">{t('scrapingNow')}</span>
+                                            <span className="text-[#30d158] font-semibold">{t('scrapingNow')}</span>
                                         ) : (
                                             <span>
-                                                {t('nextRun')}: {new Date(scraperStatus.next_run).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {t('nextRun')}: {scraperStatus.next_run ? new Date(scraperStatus.next_run).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                                                 <button
                                                     onClick={handleForceScrape}
-                                                    className="ml-2 text-[10px] text-blue-400 hover:text-blue-300 underline font-medium cursor-pointer"
+                                                    className="ml-2.5 text-xs text-white/80 hover:text-white underline underline-offset-2 transition-colors cursor-pointer"
                                                 >
                                                     {t('runNow')}
                                                 </button>
@@ -1129,7 +1152,7 @@ function App() {
                                                         fetchScraperLogs();
                                                         setShowLogsModal(true);
                                                     }}
-                                                    className="ml-2 text-[10px] text-slate-400 hover:text-slate-300 underline font-medium cursor-pointer"
+                                                    className="ml-2 text-xs text-zinc-500 hover:text-zinc-300 underline underline-offset-2 transition-colors cursor-pointer"
                                                 >
                                                     {t('logs') || 'Logs'}
                                                 </button>
@@ -1140,42 +1163,40 @@ function App() {
                             )}
                         </div>
                     </div>
-                    <div className="text-slate-300 text-sm flex flex-wrap items-center gap-3 w-full md:w-auto">
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border transition-all w-full md:w-auto ${showFilters
-                                ? 'bg-blue-600/20 border-blue-500/50 text-blue-400 shadow-[0_0_15px_-3px_rgba(37,99,235,0.4)]'
-                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
-                                }`}
-                        >
-                            <Filter className={`w-4 h-4 transition-transform duration-300 ${showFilters ? 'rotate-180 scale-110' : ''}`} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">{t('filters')}</span>
-                        </button>
+                    <div className="text-zinc-300 text-sm flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                        {!onlyFavorites && (
+                            <button
+                                onClick={() => setShowFilters(!showFilters)}
+                                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full border text-xs font-medium tracking-tight transition-all duration-200 w-full md:w-auto cursor-pointer ${showFilters
+                                    ? 'bg-white/20 text-white border-white/30 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.25)] font-semibold'
+                                    : 'bg-white/[0.05] border-white/10 text-zinc-300 hover:text-white hover:bg-white/[0.09]'
+                                    }`}
+                            >
+                                <Filter className={`w-3.5 h-3.5 transition-transform duration-300 ${showFilters ? 'scale-110' : ''}`} />
+                                <span className="uppercase tracking-wider text-[11px]">{t('filters')}</span>
+                            </button>
+                        )}
 
                         <button
                             onClick={() => setOnlyFavorites(!onlyFavorites)}
-                            className={`relative flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border transition-all group overflow-hidden w-full md:w-auto ${onlyFavorites
-                                ? 'bg-rose-500/10 border-rose-500/50 text-rose-400 shadow-[0_0_20px_-5px_rgba(244,63,94,0.3)]'
-                                : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:border-slate-600'
+                            className={`relative flex items-center justify-center gap-2 px-4 py-2 rounded-full border text-xs font-medium tracking-tight transition-all duration-200 group w-full md:w-auto cursor-pointer ${onlyFavorites
+                                ? 'bg-rose-500/15 border-rose-500/30 text-rose-300 font-semibold shadow-sm'
+                                : 'bg-white/[0.05] border-white/10 text-zinc-300 hover:text-white hover:bg-white/[0.09]'
                                 }`}
                         >
-                            <div className={`absolute inset-0 bg-rose-500/10 transition-transform duration-300 ${onlyFavorites ? 'translate-y-0' : 'translate-y-full'}`}></div>
-                            <Heart className={`w-4 h-4 relative z-10 transition-all duration-300 ${onlyFavorites ? 'fill-rose-500 text-rose-500 scale-110' : 'text-slate-400 group-hover:text-rose-400'}`} />
-                            <span className="text-[10px] font-black uppercase tracking-widest relative z-10">{t('favorites')}</span>
+                            <Heart className={`w-3.5 h-3.5 transition-all duration-300 ${onlyFavorites ? 'fill-rose-500 text-rose-500 scale-110' : 'text-zinc-400 group-hover:text-rose-400'}`} />
+                            <span className="uppercase tracking-wider text-[11px]">{t('favorites')}</span>
                         </button>
 
                         <button
                             onClick={() => setShowSavedDrawer(true)}
-                            className="relative flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 transition-all group w-full md:w-auto"
+                            className="relative flex items-center justify-center gap-2 px-4 py-2 bg-white/[0.05] hover:bg-white/[0.09] text-zinc-300 hover:text-white rounded-full border border-white/10 text-xs font-medium tracking-tight transition-all cursor-pointer w-full md:w-auto"
                         >
-                            <Bookmark className={`w-4 h-4 transition-colors ${savedSearches.some(ss => ss.new_count > 0) ? 'text-emerald-400' : 'text-slate-400 group-hover:text-emerald-400'}`} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">{t('savedSearches')}</span>
+                            <Bookmark className={`w-3.5 h-3.5 transition-colors ${savedSearches.some(ss => ss.new_count > 0) ? 'text-white' : 'text-zinc-400 group-hover:text-white'}`} />
+                            <span className="uppercase tracking-wider text-[11px]">{t('savedSearches')}</span>
                             {savedSearches.reduce((acc, ss) => acc + (ss.new_count || 0), 0) > 0 && (
-                                <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-4 w-4 bg-rose-500 text-[8px] font-bold text-white flex items-center justify-center">
-                                        {savedSearches.reduce((acc, ss) => acc + (ss.new_count || 0), 0)}
-                                    </span>
+                                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-rose-500 text-[9px] font-bold text-white">
+                                    {savedSearches.reduce((acc, ss) => acc + (ss.new_count || 0), 0)}
                                 </span>
                             )}
                         </button>
@@ -1186,10 +1207,10 @@ function App() {
                     <div className="w-full">
                         {/* Desktop Filters Panel (Inline) */}
                         {!onlyFavorites && showFilters && (
-                            <div className="hidden md:block glass-panel p-5 w-full mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="hidden md:block glass-panel p-6 w-full mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
                                 <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                                        <Filter className="w-5 h-5" /> {t('filters')}
+                                    <h3 className="text-base font-semibold text-white flex items-center gap-2 tracking-tight">
+                                        <Filter className="w-4 h-4 text-zinc-400" /> {t('filters')}
                                     </h3>
                                 </div>
                                 {renderFilters()}
@@ -1197,13 +1218,13 @@ function App() {
                         )}
 
                         {/* Mobile Filters Drawer */}
-                        <div className={`fixed inset-y-0 left-0 z-[130] w-full sm:w-80 bg-slate-900 border-r border-slate-800 shadow-[20px_0_50px_rgba(0,0,0,0.5)] transform transition-transform duration-300 ease-in-out md:hidden ${showFilters && !onlyFavorites ? 'translate-x-0' : '-translate-x-full'}`}>
-                            <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/90 backdrop-blur-sm sticky top-0 z-10">
-                                <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                                    <Filter className="text-blue-400 w-5 h-5" /> {t('filters')}
+                        <div className={`fixed inset-y-0 left-0 z-[130] w-full sm:w-80 bg-zinc-900/95 backdrop-blur-2xl border-r border-white/10 shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden ${showFilters && !onlyFavorites ? 'translate-x-0' : '-translate-x-full'}`}>
+                            <div className="p-6 border-b border-white/[0.08] flex justify-between items-center bg-zinc-900/50 backdrop-blur-md sticky top-0 z-10">
+                                <h3 className="text-lg font-semibold text-white flex items-center gap-3 tracking-tight">
+                                    <Filter className="text-zinc-400 w-4 h-4" /> {t('filters')}
                                 </h3>
-                                <button onClick={() => setShowFilters(false)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
-                                    <X className="w-6 h-6" />
+                                <button onClick={() => setShowFilters(false)} className="p-1.5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors cursor-pointer">
+                                    <X className="w-5 h-5" />
                                 </button>
                             </div>
                             <div className="p-6 overflow-y-auto h-[calc(100%-80px)] custom-scrollbar">
@@ -1213,53 +1234,55 @@ function App() {
 
                         {/* Mobile Drawer Backdrop */}
                         {showFilters && !onlyFavorites && (
-                            <div className="fixed inset-0 z-[125] bg-slate-950/60 backdrop-blur-md md:hidden animate-in fade-in duration-300" onClick={() => setShowFilters(false)}></div>
+                            <div className="fixed inset-0 z-[125] bg-black/60 backdrop-blur-md md:hidden animate-in fade-in duration-300" onClick={() => setShowFilters(false)}></div>
                         )}
                     </div>
 
                     <div className="w-full">
                         {/* Controls Bar */}
-                        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 bg-slate-900/50 p-4 rounded-2xl border border-slate-800 shadow-xl">
-                            <div className="flex items-center gap-6">
-                                <span className="text-slate-400 text-sm">
-                                    {t('showing')} <span className="font-bold text-white">{data.count || 0}</span> {t('offers')}
+                        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 glass-panel p-4 rounded-2xl border border-white/[0.08]">
+                            <div className="flex items-center gap-5">
+                                <span className="text-zinc-400 text-xs sm:text-sm">
+                                    {t('showing')} <span className="font-semibold text-white">{data.count || 0}</span> {t('offers')}
                                 </span>
 
-                                <div className="h-4 w-px bg-slate-800 hidden sm:block"></div>
+                                <div className="h-4 w-px bg-white/10 hidden sm:block"></div>
 
-                                <div className="flex items-center gap-3">
-                                    <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">{t('pageSize')}</span>
+                                <div className="flex items-center gap-2.5">
+                                    <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">{t('pageSize')}</span>
                                     <select
                                         value={pageSize}
                                         onChange={(e) => setPageSize(Number(e.target.value))}
-                                        className="bg-slate-800 border border-slate-700 text-white text-[10px] font-bold rounded-lg px-2 py-1.5 focus:outline-none focus:border-blue-500 transition-all cursor-pointer hover:bg-slate-700"
+                                        className="bg-zinc-900 border border-white/10 text-white text-xs font-medium rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-white/30 transition-all cursor-pointer hover:bg-zinc-800"
                                     >
                                         {[12, 18, 24, 36, 48].map(s => <option key={s} value={s}>{s}</option>)}
                                     </select>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-3">
                                 <button
                                     onClick={() => setIsInfinite(!isInfinite)}
-                                    className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border ${isInfinite ? 'bg-purple-600/20 border-purple-500 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)]' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'}`}
+                                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium tracking-tight transition-all border cursor-pointer ${isInfinite ? 'bg-white/20 text-white border-white/30 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.25)] font-semibold' : 'bg-white/[0.05] border-white/10 text-zinc-400 hover:text-white'}`}
                                 >
-                                    <LayoutGrid className={`w-3.5 h-3.5 ${isInfinite ? 'animate-pulse' : ''}`} />
+                                    <LayoutGrid className="w-3.5 h-3.5" />
                                     {t('infiniteScroll')}
                                 </button>
 
-                                <div className="flex items-center bg-slate-800 rounded-lg border border-slate-700 p-1">
+                                <div className="flex items-center bg-white/[0.06] rounded-full border border-white/10 p-0.5">
                                     <button
                                         onClick={() => setViewMode('grid')}
-                                        className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                                        className={`p-1.5 rounded-full transition-all cursor-pointer ${viewMode === 'grid' ? 'bg-white/20 text-white border border-white/25 shadow-sm' : 'text-zinc-400 hover:text-white'}`}
+                                        title="Grid view"
                                     >
-                                        <LayoutGrid className="w-4 h-4" />
+                                        <LayoutGrid className="w-3.5 h-3.5" />
                                     </button>
                                     <button
                                         onClick={() => setViewMode('list')}
-                                        className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                                        className={`p-1.5 rounded-full transition-all cursor-pointer ${viewMode === 'list' ? 'bg-white/20 text-white border border-white/25 shadow-sm' : 'text-zinc-400 hover:text-white'}`}
+                                        title="List view"
                                     >
-                                        <LayoutList className="w-4 h-4" />
+                                        <LayoutList className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             </div>
@@ -1267,12 +1290,12 @@ function App() {
 
                         {(loading && (!allResults || allResults.length === 0)) ? (
                             <div className="flex items-center justify-center h-64">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                                <div className="animate-spin rounded-full h-8 w-8 border-2 border-white/20 border-t-white"></div>
                             </div>
                         ) : (
                             <div className="space-y-4">
                                 {(!allResults || allResults.length === 0) ? (
-                                    <div className="glass-panel p-10 text-center text-slate-400">
+                                    <div className="glass-panel p-12 text-center text-zinc-400 text-sm">
                                         {t('noOffersFound')}
                                     </div>
                                 ) : (
@@ -1293,11 +1316,11 @@ function App() {
 
                                 {isInfinite && data.next && (
                                     <div ref={loaderRef} className="py-12 flex justify-center">
-                                        <div className="flex items-center gap-3 text-purple-400">
-                                            <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
-                                            <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                                            <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] ml-2">{t('loadingMore')}</span>
+                                        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.04] border border-white/10 text-zinc-400 text-xs font-medium">
+                                            <div className="w-1.5 h-1.5 bg-white/70 rounded-full animate-bounce"></div>
+                                            <div className="w-1.5 h-1.5 bg-white/70 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+                                            <div className="w-1.5 h-1.5 bg-white/70 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+                                            <span className="text-[11px] font-medium tracking-wider ml-1">{t('loadingMore')}</span>
                                         </div>
                                     </div>
                                 )}
@@ -1307,15 +1330,15 @@ function App() {
                                         <button
                                             disabled={!data.previous}
                                             onClick={() => handlePageChange(page - 1)}
-                                            className="px-4 py-2 bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 rounded text-sm font-medium transition-colors cursor-pointer"
+                                            className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.1] disabled:opacity-30 disabled:cursor-not-allowed rounded-xl text-xs font-medium text-white border border-white/10 transition-all cursor-pointer"
                                         >
                                             {t('previousPage')}
                                         </button>
-                                        <span className="text-sm text-slate-400">{lang === 'pl' ? 'Strona' : 'Page'} {page}</span>
+                                        <span className="text-xs text-zinc-400">{lang === 'pl' ? 'Strona' : 'Page'} {page}</span>
                                         <button
                                             disabled={!data.next}
                                             onClick={() => handlePageChange(page + 1)}
-                                            className="px-4 py-2 bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 rounded text-sm font-medium transition-colors cursor-pointer"
+                                            className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.1] disabled:opacity-30 disabled:cursor-not-allowed rounded-xl text-xs font-medium text-white border border-white/10 transition-all cursor-pointer"
                                         >
                                             {t('nextPage')}
                                         </button>
@@ -1353,19 +1376,19 @@ function App() {
             {showBackToTop && !selectedOffer && (
                 <button
                     onClick={scrollToTop}
-                    className="fixed bottom-8 right-8 p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-2xl transition-all hover:scale-110 active:scale-95 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300"
+                    className="fixed bottom-8 right-8 p-3.5 bg-zinc-900/80 hover:bg-zinc-800 text-white rounded-full backdrop-blur-xl border border-white/15 shadow-2xl transition-all hover:scale-105 active:scale-95 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300 cursor-pointer"
                     title="Back to top"
                 >
-                    <ArrowUp className="w-6 h-6" />
+                    <ArrowUp className="w-5 h-5" />
                 </button>
             )}
 
             {/* Saved Searches Side Drawer */}
-            <div className={`fixed inset-y-0 right-0 z-[120] w-full sm:w-96 bg-slate-900 border-l border-slate-800 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] transform transition-transform duration-300 ease-in-out ${showSavedDrawer ? 'translate-x-0' : 'translate-x-full'}`}>
+            <div className={`fixed inset-y-0 right-0 z-[120] w-full sm:w-96 bg-zinc-900/95 backdrop-blur-2xl border-l border-white/10 shadow-2xl transform transition-transform duration-300 ease-in-out ${showSavedDrawer ? 'translate-x-0' : 'translate-x-full'}`}>
                 {/* Drawer Header */}
-                <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/90 backdrop-blur-sm sticky top-0 z-10">
-                    <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                        <Bookmark className="text-emerald-400 w-5 h-5" /> {t('savedSearches')}
+                <div className="p-6 border-b border-white/[0.08] flex justify-between items-center bg-zinc-900/50 backdrop-blur-md sticky top-0 z-10">
+                    <h3 className="text-lg font-semibold text-white flex items-center gap-2.5 tracking-tight">
+                        <Bookmark className="text-zinc-400 w-4 h-4" /> {t('savedSearches')}
                     </h3>
                     <div className="flex items-center gap-2">
                         <button
@@ -1373,13 +1396,13 @@ function App() {
                                 fetchSavedSearches();
                                 showToast(t('savedSearchesRefreshed'), 'info');
                             }}
-                            className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-emerald-400 transition-colors"
+                            className="p-1.5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors cursor-pointer"
                             title={t('refreshCounts')}
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                         </button>
-                        <button onClick={() => setShowSavedDrawer(false)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
-                            <X className="w-6 h-6" />
+                        <button onClick={() => setShowSavedDrawer(false)} className="p-1.5 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors cursor-pointer">
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
@@ -1389,43 +1412,40 @@ function App() {
                     <div className="space-y-3">
                         {savedSearches.length === 0 ? (
                             <div className="text-center py-12">
-                                <Bookmark className="w-12 h-12 text-slate-800 mx-auto mb-4" />
-                                <p className="text-sm text-slate-500 italic">{t('noSavedSearches')}</p>
+                                <Bookmark className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
+                                <p className="text-xs text-zinc-500 italic">{t('noSavedSearches')}</p>
                             </div>
                         ) : (
                             savedSearches.map(ss => (
-                                <div key={ss.id} className="group/item bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/30 transition-all">
-                                    <div className="flex justify-between items-start mb-3">
+                                <div key={ss.id} className="group/item bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 hover:border-white/15 transition-all">
+                                    <div className="flex justify-between items-start mb-2.5">
                                         <div className="flex-1 cursor-pointer" onClick={() => applySavedSearch(ss.query_string)}>
-                                            <h4 className="text-white font-bold group-hover/item:text-blue-400 transition-colors">{ss.name}</h4>
-                                            <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-tighter">
+                                            <h4 className="text-white font-medium group-hover/item:text-white transition-colors text-sm">{ss.name}</h4>
+                                            <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-wider">
                                                 {ss.query_string.split('&').join(' • ')}
                                             </p>
                                         </div>
-                                        <div className="flex gap-1">
+                                        <div className="flex gap-1.5">
                                             <button
                                                 onClick={() => toggleTelegram(ss.id, ss.telegram_notifications)}
-                                                className={`p-2 rounded-lg border transition-all ${ss.telegram_notifications ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-slate-700/30 border-slate-700 text-slate-500 hover:text-slate-300'}`}
+                                                className={`p-2 rounded-xl border transition-all cursor-pointer ${ss.telegram_notifications ? 'bg-[#0071e3]/15 border-[#0071e3]/30 text-[#0071e3]' : 'bg-white/[0.04] border-white/10 text-zinc-400 hover:text-white'}`}
                                                 title="Telegram Notifications"
                                             >
-                                                <Send className={`w-4 h-4 ${ss.telegram_notifications ? 'fill-blue-400/20' : ''}`} />
+                                                <Send className={`w-3.5 h-3.5 ${ss.telegram_notifications ? 'fill-[#0071e3]/20' : ''}`} />
                                             </button>
                                             <button
                                                 onClick={() => deleteSavedSearch(ss.id)}
-                                                className="p-2 bg-slate-700/30 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 rounded-lg border border-slate-700 transition-all"
+                                                className="p-2 bg-white/[0.04] hover:bg-rose-500/20 text-zinc-400 hover:text-rose-300 rounded-xl border border-white/10 transition-all cursor-pointer"
                                                 title="Delete"
                                             >
-                                                <Trash2 className="w-4 h-4" />
+                                                <Trash2 className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
                                     </div>
                                     {ss.new_count > 0 && (
-                                        <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full w-fit">
-                                            <span className="flex h-2 w-2 relative">
-                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                            </span>
-                                            <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                                        <div className="flex items-center gap-1.5 px-2.5 py-0.5 bg-white/10 border border-white/15 rounded-full w-fit">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                                            <span className="text-[10px] font-semibold text-white uppercase tracking-wider">
                                                 {ss.new_count} {t('newResults')}
                                             </span>
                                         </div>
@@ -1436,13 +1456,13 @@ function App() {
                     </div>
 
                     {scraperStatus?.telegram_configured && (
-                        <div className="mt-8 pt-6 border-t border-slate-800">
+                        <div className="mt-8 pt-6 border-t border-white/[0.08]">
                             <button
                                 onClick={handleTestTelegram}
-                                className="w-full py-4 px-4 bg-slate-800/50 hover:bg-emerald-500/10 text-emerald-400 border border-slate-700 hover:border-emerald-500/30 rounded-xl transition-all flex items-center justify-center gap-3 font-bold text-sm group"
+                                className="w-full py-3.5 px-4 bg-white/[0.05] hover:bg-white/[0.1] text-zinc-200 hover:text-white border border-white/10 rounded-2xl transition-all flex items-center justify-center gap-3 font-medium text-xs cursor-pointer group"
                             >
-                                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-                                    <Send className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/15 transition-colors">
+                                    <Send className="w-3.5 h-3.5 group-hover:scale-105 transition-transform" />
                                 </div>
                                 {t('testTelegram')}
                             </button>
@@ -1453,7 +1473,7 @@ function App() {
 
             {/* Drawer Backdrop */}
             {showSavedDrawer && (
-                <div className="fixed inset-0 z-[115] bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowSavedDrawer(false)}></div>
+                <div className="fixed inset-0 z-[115] bg-black/60 backdrop-blur-md animate-in fade-in duration-300" onClick={() => setShowSavedDrawer(false)}></div>
             )}
         </>
     );
