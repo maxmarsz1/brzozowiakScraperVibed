@@ -204,7 +204,7 @@ class OfferViewSet(viewsets.ReadOnlyModelViewSet):
             from concurrent.futures import ThreadPoolExecutor
 
             headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
                 "Accept-Language": "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7",
             }
 
@@ -217,13 +217,16 @@ class OfferViewSet(viewsets.ReadOnlyModelViewSet):
                     elif res.status_code == 200:
                         res.encoding = 'utf-8'
                         bs = BeautifulSoup(res.text, features='html.parser')
-                        offer_data = bs.find('div', class_='stdBxC')
+                        offer_data = bs.select_one('.hp-listing--view-page, .hp-listing, div.stdBxC')
                         text_lower = res.text.lower()
                         has_gone = (
-                            'zostało usunięte' in text_lower or
-                            'wygasło' in text_lower or
+                            'strona nie została znaleziona' in text_lower or
+                            'nie znaleziono ogłoszenia' in text_lower or
                             'ogłoszenie nie istnieje' in text_lower or
-                            'nie znaleziono ogłoszenia' in text_lower
+                            'ogłoszenie zostało usunięte' in text_lower or
+                            'ogłoszenie wygasło' in text_lower or
+                            'zostało usunięte' in text_lower or
+                            'wygasło' in text_lower
                         )
                         if not offer_data or has_gone:
                             is_gone = True

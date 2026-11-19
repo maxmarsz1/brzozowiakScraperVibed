@@ -1,6 +1,6 @@
 export const translations = {
     en: {
-        title: "Brzozowiak Intelligence",
+        title: "Brzozowskie Intelligence",
         subtitle: "Real-time automotive market scraper",
         showing: "Showing",
         offers: "offers",
@@ -96,7 +96,7 @@ export const translations = {
         markedAllSeenSuccess: "All offers in saved search marked as seen"
     },
     pl: {
-        title: "Brzozowiak Intelligence",
+        title: "Brzozowskie Intelligence",
         subtitle: "Scraper ofert w czasie rzeczywistym",
         showing: "Pokazuje",
         offers: "ofert",

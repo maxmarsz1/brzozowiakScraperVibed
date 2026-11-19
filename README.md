@@ -1,4 +1,4 @@
-# 🚗 Brzozowiak Intelligence
+# 🚗 Brzozowskie Intelligence
 
 A real-time automotive market scraper and intelligence platform. Automatically scrapes car listings, tracks new offers, and provides a rich filtering and search interface.
 

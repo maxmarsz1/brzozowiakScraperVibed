@@ -7,6 +7,8 @@ from scraper.models import Offer, ScraperStatus, ScraperLog
 from django.utils import timezone
 from datetime import timedelta
 import os
+import re
+import json
 from scraper.telegram_utils import send_telegram_message, format_offer_message, offer_matches_search
 from scraper.models import SavedSearch
 
@@ -24,88 +26,252 @@ def log(message):
         print(f"Error saving log: {e}")
 
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'Accept-Language': 'pl,en-US;q=0.7,en;q=0.3',
+}
+
+FUEL_MAP = {
+    'diesel': 'Olej Napędowy',
+    'olej napędowy': 'Olej Napędowy',
+    'on': 'Olej Napędowy',
+    'benzyna': 'Benzyna',
+    'benzyna+lpg': 'Autogaz',
+    'lpg': 'Autogaz',
+    'autogaz': 'Autogaz',
+    'gaz': 'Autogaz',
+    'hybryda': 'Hybryda',
+    'elektryczny': 'Elektryczny',
+    'alternatywne': 'Alternatywne',
 }
 
 
 def get_data_from_url(url):
     try:
         r = requests.get(url, headers=HEADERS, timeout=40)
+        if r.status_code in (404, 410):
+            return None
         r.encoding = "utf-8"
         bs = BeautifulSoup(r.text, features="html.parser")
-        offer_data = bs.find("div", class_="stdBxC")
+
+        # Check active listing container on brzozowskie.pl or legacy brzozowiak
+        offer_data = bs.select_one(".hp-listing--view-page, .hp-listing")
+        if not offer_data:
+            offer_data = bs.find("div", class_="stdBxC")
 
         if not offer_data:
             return None
 
-        details = {}
+        # Check for phrases indicating the offer is deleted or expired
+        text_lower = r.text.lower()
+        has_gone_phrase = (
+            "strona nie została znaleziona" in text_lower or
+            "nie znaleziono ogłoszenia" in text_lower or
+            "ogłoszenie nie istnieje" in text_lower or
+            "ogłoszenie zostało usunięte" in text_lower or
+            "ogłoszenie wygasło" in text_lower or
+            "zostało usunięte" in text_lower or
+            "wygasło" in text_lower
+        )
+        if has_gone_phrase:
+            return None
 
-        def get_text_or_null(element):
-            return element.text.strip() if element else None
+        details = {
+            "url": url,
+            "id": None,
+            "title": None,
+            "description": None,
+            "date": None,
+            "location": None,
+            "brand": None,
+            "model": None,
+            "capacity": None,
+            "year": None,
+            "transmission": None,
+            "fuel": None,
+            "body": None,
+            "color": None,
+            "price": None,
+            "km": None,
+            "mileage": None,
+            "equipment": None,
+            "img": None,
+            "images": [],
+            "number_of_doors": None,
+            "imported_status": None,
+            "usage": None,
+            "registration_country": None,
+            "mot_valid_until": None,
+            "insurance_paid_until": None,
+        }
 
+        # ID extraction
+        m_id = re.search(r'/oferta/(\d+)', url)
+        if m_id:
+            details["id"] = m_id.group(1)
+        elif "brzozowiak.pl" in url:
+            details["id"] = url[-12:-5]
+        else:
+            details["id"] = url.rstrip('/').split('/')[-1]
+
+        # Extract JSON-LD product metadata if available
+        json_ld = None
+        for script in bs.find_all("script", type="application/ld+json"):
+            try:
+                data = json.loads(script.string)
+                if isinstance(data, dict):
+                    if '@graph' in data:
+                        for item in data['@graph']:
+                            if item.get('@type') == 'Product':
+                                json_ld = item
+                                break
+                    elif data.get('@type') == 'Product':
+                        json_ld = data
+            except Exception:
+                pass
+
+        # Title
+        title_el = offer_data.select_one("h1.hp-listing__title, h1, h2.presTitle")
+        details["title"] = title_el.text.strip() if title_el else (json_ld.get("name") if json_ld else None)
+
+        # Description
+        desc_el = offer_data.select_one(".hp-listing__description, .hp-listing__content, p.presDesc")
+        details["description"] = desc_el.text.strip() if desc_el else (json_ld.get("description") if json_ld else None)
+
+        # Date (stored as YYYY.MM.DD)
+        time_el = offer_data.select_one("time.hp-listing__created-date, time, date.presPubDate")
+        if time_el:
+            raw_dt = time_el.get("datetime")
+            if raw_dt:
+                dt_part = raw_dt.split("T")[0].split()[0]
+                details["date"] = dt_part.replace("-", ".")
+            else:
+                m_date = re.search(r'(\d{4})[.-](\d{2})[.-](\d{2})', time_el.text)
+                if m_date:
+                    details["date"] = f"{m_date.group(1)}.{m_date.group(2)}.{m_date.group(3)}"
+                else:
+                    m_date_pl = re.search(r'(\d{2})\.(\d{2})\.(\d{4})', time_el.text)
+                    if m_date_pl:
+                        details["date"] = f"{m_date_pl.group(3)}.{m_date_pl.group(2)}.{m_date_pl.group(1)}"
+                    else:
+                        details["date"] = time_el.text.strip()
+
+        # Location
+        loc_el = offer_data.select_one(".brz-map__place, .brz-card-meta__place, .hp-listing__location, address.presLoc")
+        details["location"] = loc_el.text.strip() if loc_el else None
+
+        # Price (digits only)
+        price_span = offer_data.select_one(".brz-price, p.presPrice")
+        if price_span:
+            digits = re.sub(r'[^\d]', '', price_span.text)
+            details["price"] = digits if digits else None
+        elif json_ld and "offers" in json_ld and "price" in json_ld["offers"]:
+            details["price"] = str(json_ld["offers"]["price"])
+
+        # HivePress attributes
+        attr_map = {}
+        for attr in offer_data.select(".hp-listing__attribute"):
+            classes = attr.get("class", [])
+            mod = [c for c in classes if c.startswith("hp-listing__attribute--")]
+            key = mod[0].replace("hp-listing__attribute--", "") if mod else None
+            if key:
+                text = attr.text
+                val = text.split(":", 1)[1].strip() if ":" in text else text.strip()
+                attr_map[key] = val
+
+        # Map attributes
+        details["brand"] = attr_map.get("marka-auta") or (json_ld.get("brand", {}).get("name") if json_ld and isinstance(json_ld.get("brand"), dict) else None)
+        details["model"] = attr_map.get("model")
+        details["year"] = attr_map.get("rok-produkcji")
+
+        trans_val = attr_map.get("skrzynia")
+        details["transmission"] = trans_val.lower() if trans_val else None
+
+        raw_fuel = attr_map.get("paliwo")
+        if raw_fuel:
+            details["fuel"] = FUEL_MAP.get(raw_fuel.lower(), raw_fuel)
+
+        raw_mileage = attr_map.get("przebieg")
+        if raw_mileage:
+            digits = re.sub(r'[^\d]', '', raw_mileage)
+            details["mileage"] = f"{digits}km" if digits else None
+
+        raw_cap = attr_map.get("pojemnosc")
+        if raw_cap:
+            digits = re.sub(r'[^\d]', '', raw_cap)
+            details["capacity"] = f"{digits}cm3" if digits else None
+
+        details["body"] = attr_map.get("nadwozie") or attr_map.get("typ-nadwozia")
+        details["color"] = attr_map.get("kolor")
+        details["number_of_doors"] = attr_map.get("liczba-drzwi")
+        details["imported_status"] = attr_map.get("stan") or attr_map.get("status-pojazdu")
+        details["km"] = attr_map.get("moc-silnika") or attr_map.get("moc")
+        details["equipment"] = attr_map.get("wyposazenie")
+        details["usage"] = attr_map.get("uzytkowanie")
+        details["registration_country"] = attr_map.get("kraj-rejestracji")
+        details["mot_valid_until"] = attr_map.get("przeglad")
+        details["insurance_paid_until"] = attr_map.get("ubezpieczenie")
+
+        # Legacy fallback if parsing an old brzozowiak page
         def get_th_value(label_text):
             th_element = offer_data.find("th", string=lambda t: t and label_text in t)
             if not th_element:
                 th_element = offer_data.find(lambda tag: tag.name == "th" and label_text in tag.text)
-            return get_text_or_null(th_element.next_sibling) if th_element else None
+            return th_element.next_sibling.text.strip() if th_element and th_element.next_sibling else None
 
-        details["title"] = get_text_or_null(offer_data.find("h2", class_="presTitle"))
-        details["description"] = get_text_or_null(offer_data.find("p", class_="presDesc"))
-        details["date"] = get_text_or_null(offer_data.find("date", class_="presPubDate"))
-        details["location"] = get_text_or_null(offer_data.find("address", class_="presLoc"))
+        if not details["brand"] and offer_data.find("td", itemprop="brand"):
+            details["brand"] = offer_data.find("td", itemprop="brand").text.strip()
+        if not details["model"] and offer_data.find("td", itemprop="model"):
+            details["model"] = offer_data.find("td", itemprop="model").text.strip()
+        if not details["year"] and offer_data.find("td", itemprop="productionDate"):
+            details["year"] = offer_data.find("td", itemprop="productionDate").text.strip()
+        if not details["transmission"] and offer_data.find("td", itemprop="vehicleTransmission"):
+            details["transmission"] = offer_data.find("td", itemprop="vehicleTransmission").text.strip()
+        if not details["fuel"] and offer_data.find("td", itemprop="fuelType"):
+            details["fuel"] = offer_data.find("td", itemprop="fuelType").text.strip()
+        if not details["body"] and offer_data.find("td", itemprop="bodyType"):
+            details["body"] = offer_data.find("td", itemprop="bodyType").text.strip()
+        if not details["color"] and offer_data.find("td", itemprop="color"):
+            details["color"] = offer_data.find("td", itemprop="color").text.strip()
+        if not details["capacity"]:
+            details["capacity"] = get_th_value("Pojemność silnika")
+        if not details["km"]:
+            details["km"] = get_th_value("Moc silnika")
+        if not details["number_of_doors"] and offer_data.find("td", itemprop="numberOfDoors"):
+            details["number_of_doors"] = offer_data.find("td", itemprop="numberOfDoors").text.strip()
+        if not details["imported_status"]:
+            details["imported_status"] = get_th_value("Status pojazdu sprowadzonego")
+        if not details["usage"]:
+            details["usage"] = get_th_value("Użytkowanie")
+        if not details["registration_country"]:
+            details["registration_country"] = get_th_value("Kraj aktualnej rejestracji")
+        if not details["mot_valid_until"]:
+            details["mot_valid_until"] = get_th_value("Przegląd techniczny ważny do")
+        if not details["insurance_paid_until"]:
+            details["insurance_paid_until"] = get_th_value("Ubezpieczenie OC opłacone do")
 
-        details["brand"] = get_text_or_null(offer_data.find("td", itemprop="brand"))
-        details["model"] = get_text_or_null(offer_data.find("td", itemprop="model"))
-        details["year"] = get_text_or_null(offer_data.find("td", itemprop="productionDate"))
-        details["transmission"] = get_text_or_null(offer_data.find("td", itemprop="vehicleTransmission"))
-        details["fuel"] = get_text_or_null(offer_data.find("td", itemprop="fuelType"))
-        details["body"] = get_text_or_null(offer_data.find("td", itemprop="bodyType"))
-        details["color"] = get_text_or_null(offer_data.find("td", itemprop="color"))
+        # Images
+        images = []
+        img_container = offer_data.select_one(".hp-listing__images, .hp-listing__image, #LGA")
+        if img_container:
+            for img in img_container.select("img"):
+                src = img.get("data-zoom") or img.get("src")
+                if src and src not in images:
+                    images.append(src)
+            for a in img_container.select("a.ath, a[href*='wp-content/uploads']"):
+                src = a.get("href")
+                if src and src not in images:
+                    images.append(src)
 
-        # New itemprop
-        details["number_of_doors"] = get_text_or_null(offer_data.find("td", itemprop="numberOfDoors"))
+        if not images and json_ld and "image" in json_ld:
+            img_val = json_ld["image"]
+            if isinstance(img_val, list):
+                images.extend(img_val)
+            elif isinstance(img_val, str):
+                images.append(img_val)
 
-        # Table headers (TH)
-        details["capacity"] = get_th_value("Pojemność silnika")
-        details["km"] = get_th_value("Moc silnika")
-
-        # New TH fields
-        details["imported_status"] = get_th_value("Status pojazdu sprowadzonego")
-        details["usage"] = get_th_value("Użytkowanie")
-        details["registration_country"] = get_th_value("Kraj aktualnej rejestracji")
-        details["mot_valid_until"] = get_th_value("Przegląd techniczny ważny do")
-        details["insurance_paid_until"] = get_th_value("Ubezpieczenie OC opłacone do")
-
-        price_p = offer_data.find("p", class_="presPrice")
-        if price_p:
-            details["price"] = price_p.text.replace(" PLN", "").replace(" ", "").strip()
-        else:
-            details["price"] = None
-
-        mileage_span = offer_data.find("span", string=lambda t: t and "Przebieg:" in t)
-        if not mileage_span:
-            mileage_span = offer_data.find(lambda tag: tag.name == "span" and "Przebieg:" in tag.text)
-        if mileage_span and mileage_span.parent and mileage_span.parent.b:
-            details["mileage"] = mileage_span.parent.b.text.replace(" KM", "").replace(" ", "").strip()
-        else:
-            details["mileage"] = None
-
-        details["equipment"] = get_text_or_null(offer_data.find("p", itemprop="description"))
-
-        details["id"] = url[-12:-5]
-        details["url"] = url
-
-        img_a = offer_data.find("a", class_="ath")
-
-        # Extract all images from the LGA div container
-        lga_div = offer_data.find("div", id="LGA", class_="athCnt")
-        if lga_div:
-            img_links = [a['href'] for a in lga_div.find_all("a", class_="ath") if 'href' in a.attrs]
-            details["images"] = img_links
-        else:
-            details["images"] = [img_a['href']] if img_a and 'href' in img_a.attrs else []
-
-        details["img"] = details["images"][0] if details["images"] else None
+        details["images"] = images
+        details["img"] = images[0] if images else None
 
         return details
     except Exception as e:
@@ -114,8 +280,8 @@ def get_data_from_url(url):
 
 
 def run_scraper():
-    base_url = "https://brzozowiak.pl"
-    url = "https://brzozowiak.pl/samochody-osobowe/?str="
+    base_url = "https://brzozowskie.pl"
+    base_cat_url = "https://brzozowskie.pl/ogloszenia/motoryzacja/samochody-osobowe/"
     pages_count = 200
 
     # Get existing URLs from DB
@@ -132,36 +298,59 @@ def run_scraper():
             break
 
         try:
-            log(f"Getting {page+1} page...")
-            r = requests.get(url + str(page+1), headers=HEADERS)
-            bs = BeautifulSoup(r.text, features="html.parser")
-            auctions_list = bs.find("div", class_="list")
+            page_num = page + 1
+            if page_num == 1:
+                page_url = base_cat_url
+            else:
+                page_url = f"{base_cat_url}page/{page_num}/"
 
-            if not auctions_list:
+            log(f"Getting {page_num} page ({page_url})...")
+            r = requests.get(page_url, headers=HEADERS, timeout=25)
+
+            if r.status_code == 404:
+                log(f"Page {page_num} returned 404 (end of pagination). Breaking...")
+                break
+
+            if r.status_code != 200:
+                log(f"Page {page_num} returned status {r.status_code}. Breaking...")
+                break
+
+            bs = BeautifulSoup(r.text, features="html.parser")
+            listing_cards = bs.select(".hp-listing--view-block, article.brz-card, .hp-listing")
+
+            if not listing_cards:
+                listing_cards = bs.select("div.listRow")
+
+            if not listing_cards:
                 log("No more auctions found. Breaking...")
                 break
 
-            offers = auctions_list.find_all("div", class_="listRow")
-            if not offers:
-                break
-
-            for offer in offers:
-                a_tag = offer.find("a")
+            page_offer_urls = []
+            for card in listing_cards:
+                a_tag = card.select_one("a[href*='/oferta/']") or card.find("a")
                 if a_tag and 'href' in a_tag.attrs:
                     offer_url = a_tag['href']
                     full_url = base_url + offer_url if not offer_url.startswith("http") else offer_url
-                    scraped_urls.add(full_url)
+                    if full_url not in page_offer_urls:
+                        page_offer_urls.append(full_url)
 
-                    if full_url in db_urls:
-                        consecutive_existing += 1
-                        if page >= 9 and consecutive_existing >= 100:
-                            log("Found 100 consecutive existing offers and scanned at least 10 pages. Stopping pagination.")
-                            stop_scraping = True
-                            break
-                    else:
-                        consecutive_existing = 0
-                        if full_url not in new_urls:
-                            new_urls.append(full_url)
+            if not page_offer_urls:
+                log("No offer links found on this page. Breaking...")
+                break
+
+            for full_url in page_offer_urls:
+                scraped_urls.add(full_url)
+
+                if full_url in db_urls:
+                    consecutive_existing += 1
+                    if page >= 9 and consecutive_existing >= 100:
+                        log("Found 100 consecutive existing offers and scanned at least 10 pages. Stopping pagination.")
+                        stop_scraping = True
+                        break
+                else:
+                    consecutive_existing = 0
+                    if full_url not in new_urls:
+                        new_urls.append(full_url)
 
             # Realistic delay between page loads
             time.sleep(random.uniform(1.0, 3.0))
@@ -281,14 +470,23 @@ def run_scraper():
                 try:
                     res = requests.get(candidate.url, headers=HEADERS, timeout=10)
                     is_gone = False
-                    if res.status_code == 404:
+                    if res.status_code in (404, 410):
                         is_gone = True
                     else:
                         res.encoding = "utf-8"
                         bs = BeautifulSoup(res.text, features="html.parser")
-                        if not bs.find("div", class_="stdBxC"):
-                            is_gone = True
-                        elif "ogłoszenie nie istnieje" in res.text.lower() or "nie znaleziono ogłoszenia" in res.text.lower():
+                        offer_data = bs.select_one(".hp-listing--view-page, .hp-listing, div.stdBxC")
+                        text_lower = res.text.lower()
+                        has_gone = (
+                            "strona nie została znaleziona" in text_lower or
+                            "nie znaleziono ogłoszenia" in text_lower or
+                            "ogłoszenie nie istnieje" in text_lower or
+                            "ogłoszenie zostało usunięte" in text_lower or
+                            "ogłoszenie wygasło" in text_lower or
+                            "zostało usunięte" in text_lower or
+                            "wygasło" in text_lower
+                        )
+                        if not offer_data or has_gone:
                             is_gone = True
                     
                     if is_gone:
@@ -344,17 +542,19 @@ def run_maintenance(limit=None):
             elif response.status_code == 200:
                 response.encoding = "utf-8"
                 bs = BeautifulSoup(response.text, features="html.parser")
-                offer_data = bs.find("div", class_="stdBxC")
+                offer_data = bs.select_one(".hp-listing--view-page, .hp-listing, div.stdBxC")
                 
-                # Active offers on Brzozowiak always have <div class="stdBxC">.
-                # When deleted or expired, stdBxC is absent and Brzozowiak displays:
-                # "Ogłoszenie zostało usunięte przez ogłoszeniodawcę lub wygasło."
+                # Active offers on brzozowskie have .hp-listing--view-page (or legacy stdBxC).
+                # When deleted or expired, offer_data is absent or a gone message is displayed.
                 text_lower = response.text.lower()
                 has_gone_phrase = (
-                    "zostało usunięte" in text_lower or
-                    "wygasło" in text_lower or
+                    "strona nie została znaleziona" in text_lower or
+                    "nie znaleziono ogłoszenia" in text_lower or
                     "ogłoszenie nie istnieje" in text_lower or
-                    "nie znaleziono ogłoszenia" in text_lower
+                    "ogłoszenie zostało usunięte" in text_lower or
+                    "ogłoszenie wygasło" in text_lower or
+                    "zostało usunięte" in text_lower or
+                    "wygasło" in text_lower
                 )
                 
                 if not offer_data or has_gone_phrase:
